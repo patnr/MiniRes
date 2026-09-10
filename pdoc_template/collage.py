@@ -145,10 +145,9 @@ def features(figsize=(20, 12.6)):
     ax.legend(title="Fronts: $s$ = 0.2, 0.5, 0.8", title_fontsize="x-small",
               loc="lower right", **leg)
 
-    ## Rate scheduling
-    rs = example("rate_scheduling")
-    field(rs.model, axs[4], rs.SS[-1], "oil",
-          title=f"Scheduled injection rates (t = {rs.dt*rs.nSteps:.1f})")
+    ## Rate scheduling (the quarter five-spot's scheduled variant)
+    field(q5.model_sch, axs[4], q5.SS_sch[-1], "oil",
+          title=f"Scheduled injection rates (t = {q5.dt*q5.nSteps:.1f})")
 
     ## Well paths: the sweep, and the allocation along the path
     wp = example("well_path")
@@ -213,19 +212,9 @@ def features(figsize=(20, 12.6)):
           levels=np.linspace(-vmax, vmax, 21), wells=dict(size=.4, text=False),
           title=f"Compressible: pressure diffusion (t = {k*pd.dt:.4f})")
 
-    ## Compressibility: primary depletion
-    dp = example("depletion")
-    ax = axs[12]
-    ax.plot(dp.tt, dp.p_mean, label="Mean, $\\bar{p}$")
-    ax.plot(dp.tt, dp.p_cell, label="Producer cell, $p_\\mathrm{cell}$")
-    ax.plot(dp.tt, 1 - dp.q*dp.tt/(dp.model.ct*dp.pore_volume), "k--", lw=1,
-            label="Material balance, $p_0 - q t / (c_t V_p)$")
-    ax.set(title="Primary depletion (no injection)", xlabel="Time", ylabel="p")
-    ax.legend(**leg)
-
     ## Compressibility: under-injection
     vr = example("voidage_replacement")
-    ax = axs[13]
+    ax = axs[12]
     for SS, vrr, t_bt in zip([vr.SS_full, vr.SS_half], ["1", "½"], vr.breakthrough):
         h, = ax.plot(vr.tt, 1 - SS[:, vr.iprd], label=f"VRR = {vrr}")
         ax.axvline(t_bt, c=h.get_color(), ls=":", lw=1)
@@ -235,7 +224,7 @@ def features(figsize=(20, 12.6)):
 
     ## Adjoint: history matching
     hm = example("history_match_gradient")
-    ax = axs[14]
+    ax = axs[13]
     for i in range(len(hm.producers)):
         ax.plot(hm.tt, hm.obs[:, i], "*", c=f"C{i}")
         ax.plot(hm.tt, hm.fw_final[:, i], "-", c=f"C{i}")
@@ -245,6 +234,17 @@ def features(figsize=(20, 12.6)):
     ax.set(title=f"Adjoint history matching ({len(hm.JJ) - 1} descent steps)",
            xlabel="Time", ylabel="Water cut at the 4 producers", ylim=(-.02, 1))
     ax.legend(loc="upper left", **leg)
+
+    ## Adjoint: the sensitivity to the BHP schedule
+    wcg = example("water_cut_gradient")
+    ax = axs[14]
+    for i, name in enumerate(wcg.producers):
+        ax.step(wcg.tt[:-1], wcg.G_bhp[1 + i], where="post", label=name, c=f"C{i}")
+    ax.axvline(wcg.tt[wcg.k], c="k", ls=":", lw=1, label="objective's time")
+    ax.axhline(0, c="k", lw=.5)
+    ax.set(title="Adjoint: sensitivity to the BHP schedule",
+           xlabel="Time (of the control)", ylabel="∂(water cut) / ∂ $p_\\mathrm{bh}$")
+    ax.legend(**leg)
 
     for ax in axs:
         ax.set_box_aspect(1)
