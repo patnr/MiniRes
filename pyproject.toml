@@ -45,7 +45,7 @@ dependencies = [
     "matplotlib>=3.8,<4",
     "scipy~=1.10",
     "tqdm~=4.65",
-    "mpl-tools>=0.4.0,<0.5",
+    "struct-tools>=0.3",
 ]
 
 # The PyPI sidebar. `Homepage` is the docs (whose index redirects to the

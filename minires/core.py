@@ -7,9 +7,9 @@ from typing import Any, Callable
 import numpy as np
 from scipy import sparse
 from scipy.sparse.linalg import LinearOperator, cg, splu, spsolve
+from struct_tools import AlignedRepr
 from tqdm.auto import tqdm
 
-from minires._repr import AlignedRepr
 from minires.grid import Fluxes, Grid2D
 from minires.plotting import Plot2D
 from minires.fluids import Fluid

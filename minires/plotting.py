@@ -7,11 +7,33 @@ import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.colors import BoundaryNorm
 from matplotlib.ticker import MaxNLocator, MultipleLocator
-from mpl_tools import is_inline, place, place_ax
-from mpl_tools.misc import axprops
 
 if TYPE_CHECKING:
     from minires import ResSim
+
+# NB: the two helpers below are all that is left of the `mpl-tools` dependency
+# (dropped so that the package need not concern itself with front-ends).
+# Its `freshfig` is not among them: `plt.subplots(num=..., clear=True)` is the
+# same thing, bar the screen placement, which belongs in a user's own tooling.
+
+# The axes properties that `plt_field` (and `styles`) let the caller set.
+_AXPROPS = ["title", "facecolor", "aspect"] + [
+    xyz + p for xyz in "xyz" for p in ["label", "ticks", "scale", "lim"]
+]
+
+
+def axprops(kwargs: dict) -> dict:
+    """Pop (and return) the `kwargs` that belong to `ax.set`, ref `_AXPROPS`."""
+    return {p: kwargs.pop(p) for p in _AXPROPS if p in kwargs}
+
+
+def is_inline() -> bool:
+    """Whether the active `mpl` backend is an IPython/Jupyter `inline` one.
+
+    NB: not the negation of "interactive" -- `Agg`, `PDF`, ... are neither.
+    """
+    return "inline" in mpl.get_backend()
+
 
 coord_type = "absolute"
 """Define scaling of `Plot2D.plt_field` axes.
@@ -446,8 +468,9 @@ class Plot2D:
 
         # Create figure and axes
         title = "Animation" + ("-- " + title if title else "")
-        fig, (ax1, ax2) = place.freshfig(
-            title, ncols=2, figsize=figsize, gridspec_kw=dict(width_ratios=(2, 3))
+        fig, (ax1, ax2) = plt.subplots(
+            num=title, clear=True, ncols=2, figsize=figsize,
+            gridspec_kw=dict(width_ratios=(2, 3)),
         )
         fig.suptitle(title)  # coz animation never (any backend) displays title
         # Saturations

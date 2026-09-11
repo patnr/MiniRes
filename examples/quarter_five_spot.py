@@ -39,7 +39,7 @@ In the figures:
   scheduled one a step ahead: its water arrives along the north edge.
 """
 
-from mpl_tools.place import freshfig
+import matplotlib.pyplot as plt
 import numpy as np
 
 from minires import ResSim
@@ -77,8 +77,8 @@ SS_sch, PP_sch = model_sch.sim(dt, nSteps, water_sat0, pbar=False)
 ## Plot: the paper's Fig. 6 (from the explicit scheme)
 kws = dict(levels=17, cmap="jet", origin=None, extent=(0, model.Lx, 0, model.Ly))
 
-fig, axs = freshfig("Fig. 6", nrows=2, ncols=3, sharex=True, sharey=True,
-                    subplot_kw={'aspect': 'equal'})
+fig, axs = plt.subplots(num="Fig. 6", clear=True, nrows=2, ncols=3, sharex=True, sharey=True,
+                        subplot_kw={'aspect': 'equal'})
 
 for ax, t in zip(axs.ravel(), [None, .14, .28, .42, .56, .70]):
     if ax.get_subplotspec().is_last_row() : ax.set_xlabel("x")  # noqa
@@ -106,8 +106,8 @@ for ax, t in zip(axs.ravel(), [None, .14, .28, .42, .56, .70]):
 fig.tight_layout()
 
 ## Plot: scheme and schedule comparison (at the final time)
-fig, axs = freshfig("Quarter five-spot -- final saturation", ncols=3,
-                    sharex=True, sharey=True, subplot_kw={'aspect': 'equal'})
+fig, axs = plt.subplots(num="Quarter five-spot -- final saturation", clear=True, ncols=3,
+                        sharex=True, sharey=True, subplot_kw={'aspect': 'equal'})
 
 for ax, (S, title) in zip(axs, [(SS_exp[-1], "Explicit (upwind)"),
                                 (SS_imp[-1], "Implicit (Newton)"),
@@ -121,7 +121,7 @@ axs[0].set_ylabel("y")
 fig.tight_layout()
 
 ## Plot: the schedule itself, and the resulting production
-fig, axs = freshfig("Quarter five-spot -- schedule", ncols=2, figsize=(9, 3.5))
+fig, axs = plt.subplots(num="Quarter five-spot -- schedule", clear=True, ncols=2, figsize=(9, 3.5))
 
 tt = dt*(1 + np.arange(nSteps))
 for i, rate in enumerate(model_sch.wells.actual_rates[:2]):

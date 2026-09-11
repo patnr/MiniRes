@@ -125,8 +125,7 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any
 
 import numpy as np
-
-from minires._repr import AlignedRepr
+from struct_tools import AlignedRepr
 
 if TYPE_CHECKING:
     from minires import ResSim

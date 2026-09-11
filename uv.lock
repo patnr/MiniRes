@@ -754,8 +754,8 @@ version = "0.2.0"
 source = { editable = "." }
 dependencies = [
     { name = "matplotlib" },
-    { name = "mpl-tools" },
     { name = "scipy" },
+    { name = "struct-tools" },
     { name = "tqdm" },
 ]
 
@@ -784,8 +784,8 @@ wasm = [
 [package.metadata]
 requires-dist = [
     { name = "matplotlib", specifier = ">=3.8,<4" },
-    { name = "mpl-tools", specifier = ">=0.4.0,<0.5" },
     { name = "scipy", specifier = "~=1.10" },
+    { name = "struct-tools", specifier = ">=0.3" },
     { name = "tqdm", specifier = "~=4.65" },
 ]
 
@@ -804,18 +804,6 @@ dev = [
 docs = [{ name = "pdoc", specifier = ">=16,<17" }]
 test = [{ name = "pytest", specifier = ">=7.1.3,<8" }]
 wasm = [{ name = "marimo", specifier = ">=0.24,<1" }]
-
-[[package]]
-name = "mpl-tools"
-version = "0.4.3"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "matplotlib" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/1f/c0/19a7354f50f27628e0cf80cbcf07fae34998002dd3f819f6c6f5b4dab0b5/mpl_tools-0.4.3.tar.gz", hash = "sha256:4ca1a449ec95f3e4e0d873bd85c01eb56790fdaa16df70a63d5f6f3b808feafe", size = 17133, upload-time = "2026-06-26T14:04:11.733Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/57/3d/ef26b234b9816f6fd497149a548ac747d418863291fe33f899dc01b0ab0f/mpl_tools-0.4.3-py3-none-any.whl", hash = "sha256:35c4d630ecad2070c332d2c9db72a3084ab9e639a82cd13902a5de3034388687", size = 19213, upload-time = "2026-06-26T14:04:10.57Z" },
-]
 
 [[package]]
 name = "msgspec"
@@ -1477,6 +1465,15 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/b5/b4/205b0d5241d934e8add0c38aa924c4f9fb7330834ff11e5444db964ec3f9/starlette-1.6.0.tar.gz", hash = "sha256:d4e3ac5e546444960c710297a3c9fc3f7ebae1b7e963f3d36173b49da535be9b", size = 2716969, upload-time = "2026-08-08T18:27:57.512Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/c8/cb/6a6a47d5b464bd08695d254f3da6e7986cc70c9fa5d778eda57538edfe56/starlette-1.6.0-py3-none-any.whl", hash = "sha256:a86dd39d14bb45f85a3d18525215a9ef0cfd1f192ac793220e72598c90335f0c", size = 75969, upload-time = "2026-08-08T18:27:56.196Z" },
+]
+
+[[package]]
+name = "struct-tools"
+version = "0.3.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/19/9c/1f4cbf78133841d8b3c4a8dcf05bd07a3a49d7a108de86d81eebd0a1679e/struct_tools-0.3.0.tar.gz", hash = "sha256:c5a8cd299194b4d5e2d2a34945e213c9dfebdc0dfd023b8c56e32e084b996b8b", size = 4571, upload-time = "2026-09-11T13:30:59.254Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/6d/fa/19b8b52485183eaa5458071de377a5f0e4a3f2e29d217ad3dff328e9ce7d/struct_tools-0.3.0-py3-none-any.whl", hash = "sha256:92ce7f4f8828e4b96f233b9b3521f98e3e69f3212d85e9c61625ed15998ddeec", size = 5007, upload-time = "2026-09-11T13:30:58.316Z" },
 ]
 
 [[package]]

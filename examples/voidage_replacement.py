@@ -45,7 +45,7 @@ In the figures:
   material-balance line (dashed), while VRR = 1 holds it at 15.
 """
 
-from mpl_tools.place import freshfig
+import matplotlib.pyplot as plt
 import numpy as np
 
 from minires import ResSim
@@ -84,8 +84,8 @@ iprd = model.xy2ind(*model.wells.xy[1])
 breakthrough = [dt*np.argmax(S[:, iprd] > .01) for S in [SS_full, SS_half]]
 
 ## Plot: the front, at equal times
-fig, axs = freshfig("Voidage replacement -- saturation", nrows=2, ncols=3,
-                    sharex=True, sharey=True, figsize=(9, 6))
+fig, axs = plt.subplots(num="Voidage replacement -- saturation", clear=True, nrows=2, ncols=3,
+                        sharex=True, sharey=True, figsize=(9, 6))
 for row, (SS, vrr) in enumerate(zip([SS_full, SS_half], ["1", "½"])):
     for col, t in enumerate([2, 4, 8]):
         model.plt_field(axs[row, col], SS[int(t/dt)], "oil", wells=dict(size=.4),
@@ -96,8 +96,8 @@ axs[1, 0].set_xlabel("x")
 fig.tight_layout()
 
 ## Plot: breakthrough, and the pressure paid for it
-fig, (ax1, ax2) = freshfig("Voidage replacement -- histories",
-                           ncols=2, figsize=(10, 4))
+fig, (ax1, ax2) = plt.subplots(num="Voidage replacement -- histories", clear=True,
+                               ncols=2, figsize=(10, 4))
 
 for SS, vrr, t_bt in zip([SS_full, SS_half], ["1", "½"], breakthrough):
     h, = ax1.plot(tt, 1 - SS[:, iprd], label=f"VRR = {vrr}")

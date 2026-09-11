@@ -79,7 +79,7 @@ In the figures:
   remainder last. The colour scale is shared.
 """
 
-from mpl_tools.place import freshfig
+import matplotlib.pyplot as plt
 import numpy as np
 
 from minires import ResSim
@@ -139,7 +139,7 @@ plateau = dp_dlnt.min()
 perm_est = q*mu / (4*np.pi*C*plateau)
 
 ## Plot: monitor points, the drawdown, and the well test
-fig, (ax1, ax2, ax3) = freshfig("Buildup -- time series", ncols=3, figsize=(14, 4))
+fig, (ax1, ax2, ax3) = plt.subplots(num="Buildup -- time series", clear=True, ncols=3, figsize=(14, 4))
 
 for r in [0, 200, 500, 1000]:
     i = model.xy2ind(L/2 + r, L/2)
@@ -172,8 +172,8 @@ ax3.legend(fontsize="small")
 fig.tight_layout()
 
 ## Plot: the depression cone growing, then filling in
-fig, axs = freshfig("Buildup -- pressure", ncols=5, sharex=True, sharey=True,
-                    figsize=(13.5, 3.2))
+fig, axs = plt.subplots(num="Buildup -- pressure", clear=True, ncols=5, sharex=True, sharey=True,
+                        figsize=(13.5, 3.2))
 kws: dict = dict(levels=np.linspace(PP.min(), p_i, 21), cmap="viridis",
                  colorbar=False, finalize=False, wells=dict(size=.4))
 snapshots = [kShut // 6, kShut, kShut + 2, kShut + 10, nSteps]

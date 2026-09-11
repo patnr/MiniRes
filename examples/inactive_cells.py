@@ -21,7 +21,7 @@ contours -- these interpolate between cell centres, so they also leave blank
 the half-cell margin around the inactive cells (as around the domain).
 """
 
-from mpl_tools.place import freshfig
+import matplotlib.pyplot as plt
 import numpy as np
 from scipy.ndimage import uniform_filter as smooth
 
@@ -60,8 +60,8 @@ pv = model.pore_volume()[~inactive]
 assert np.isclose((pv * SS[kBT - 1][~inactive]).sum(), (kBT - 1) * dt)
 
 ## Plot
-fig, axs = freshfig("Inactive cells", ncols=3, figsize=(11, 3.8),
-                    sharex=True, sharey=True)
+fig, axs = plt.subplots(num="Inactive cells", clear=True, ncols=3, figsize=(11, 3.8),
+                        sharex=True, sharey=True)
 kws: dict = dict(finalize=False, wells=dict(size=.5))
 model.plt_field(axs[0], logK, cellwise=True, cmap="viridis", levels=17,
                 title="log-Permeability (cells painted flat)", **kws)

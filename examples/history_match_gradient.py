@@ -41,7 +41,7 @@ In the figure:
     better; the point here is the *gradient*, which any of them needs.
 """
 
-from mpl_tools.place import freshfig
+import matplotlib.pyplot as plt
 import numpy as np
 from scipy.ndimage import uniform_filter as smooth
 
@@ -132,7 +132,7 @@ fw_final = water_cut(new_model(logK), new_model(logK).sim(dt, nSteps, S0, pbar=F
 corr = np.corrcoef(-G0.ravel(), logK_true.ravel())[0, 1]
 
 ## Plot
-fig, axs = freshfig("History-match gradient", ncols=3, nrows=2, figsize=(13, 8))
+fig, axs = plt.subplots(num="History-match gradient", clear=True, ncols=3, nrows=2, figsize=(13, 8))
 
 kws = dict(cmap="viridis", wells="color", finalize=False)
 model.plt_field(axs[0, 0], logK_true, title="Truth, $\\log K$",

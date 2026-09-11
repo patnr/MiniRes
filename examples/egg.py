@@ -104,7 +104,7 @@ Terms of Use). With `d` that directory, the file was made by
 
 from pathlib import Path
 
-from mpl_tools.place import freshfig
+import matplotlib.pyplot as plt
 import numpy as np
 
 from minires import ResSim
@@ -189,7 +189,7 @@ print(f"Recovery (fraction of OOIP): {recovery:.3f}, 3D reference {recovery_ref:
 print(f"Injector BHP: {bhp_inj.min():.1f}-{bhp_inj.max():.1f} bar")
 
 ## Plot: the permeability, and the water's advance
-fig, axs = freshfig("Egg -- fields", ncols=4, figsize=(15, 4), sharex=True, sharey=True)
+fig, axs = plt.subplots(num="Egg -- fields", clear=True, ncols=4, figsize=(15, 4), sharex=True, sharey=True)
 kws: dict = dict(colorbar=False, finalize=False, wells=dict(size=.4, text=False))
 model.plt_field(axs[0], np.log10(np.where(footprint, K, np.nan)).ravel(), cmap="viridis",
                 levels=np.linspace(2, 3.7, 18), title="$\\log_{10} K$ [mD]", **kws)
@@ -198,7 +198,7 @@ for ax, k in zip(axs[1:], [20, 60, nSteps]):
 fig.tight_layout()
 
 ## Plot: production, against the 3D reference
-fig, (ax1, ax2) = freshfig("Egg -- production", ncols=2, figsize=(12, 4))
+fig, (ax1, ax2) = plt.subplots(num="Egg -- production", clear=True, ncols=2, figsize=(12, 4))
 names = [list(ij)[i] for i in producers]
 for j, name in enumerate(names):
     ax1.plot(tt, cut[:, j], c=f"C{j}", label=name)

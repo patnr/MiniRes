@@ -77,7 +77,7 @@ In the figures:
   *discretization*, not *bug*.
 """
 
-from mpl_tools.place import freshfig
+import matplotlib.pyplot as plt
 import numpy as np
 from scipy.optimize import minimize_scalar
 
@@ -240,7 +240,7 @@ print(f"Convergence: L1 error ~ h^{rate:.2f}")
 assert .7 < rate < 1.1, "Lost (near-)first-order convergence."
 
 ## Plot: the fractional-flow curve and the Welge tangent
-fig, ax = freshfig("Buckley-Leverett -- fractional flow", figsize=(6, 5))
+fig, ax = plt.subplots(num="Buckley-Leverett -- fractional flow", clear=True, figsize=(6, 5))
 
 for case, p in profiles.items():
     m = models[case]
@@ -264,8 +264,8 @@ ax.legend(fontsize="small", loc="lower right")
 fig.tight_layout()
 
 ## Plot: the saturation profiles, numerical vs. analytic
-fig, axs = freshfig("Buckley-Leverett -- saturation profile", ncols=2,
-                    sharey=True, figsize=(10, 4.5))
+fig, axs = plt.subplots(num="Buckley-Leverett -- saturation profile", clear=True, ncols=2,
+                        sharey=True, figsize=(10, 4.5))
 
 for ax, (case, p) in zip(axs, profiles.items()):
     ax.plot(p["xD"], p["exact"], "k-", lw=2, label="Analytic (Buckley-Leverett)")
@@ -281,8 +281,8 @@ axs[0].legend(fontsize="small")
 fig.tight_layout()
 
 ## Plot: water cut, and the convergence of the profile
-fig, (ax1, ax2) = freshfig("Buckley-Leverett -- verification", ncols=2,
-                           figsize=(10, 4.5))
+fig, (ax1, ax2) = plt.subplots(num="Buckley-Leverett -- verification", clear=True, ncols=2,
+                               figsize=(10, 4.5))
 
 ax1.plot(tt, water_cut_exact, "k-", lw=2, label="Welge forecast")
 ax1.plot(tt, water_cut, "C0.", ms=4, label="Simulated (explicit)")

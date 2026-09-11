@@ -54,7 +54,7 @@ In the figures:
   rate to machine precision.
 """
 
-from mpl_tools.place import freshfig
+import matplotlib.pyplot as plt
 import numpy as np
 
 from minires import ResSim
@@ -101,8 +101,8 @@ def run(model):
     return PP
 
 ## Plot: the diagnostic -- cell pressure is a grid artefact, bottom-hole is not
-fig, (ax1, ax2) = freshfig("Well control -- diagnostic", ncols=2, figsize=(10, 4),
-                           sharey=True)
+fig, (ax1, ax2) = plt.subplots(num="Well control -- diagnostic", clear=True, ncols=2, figsize=(10, 4),
+                               sharey=True)
 for N in [32, 64]:
     model = depleter(N, rate=-q)
     PP = run(model)
@@ -137,7 +137,7 @@ J = prod_bhp[-1] / (PP_bhp[-1].mean() - p_bh)
 tau = ct*Vp/J
 
 ## Plot: rate and BHP, under either mode
-fig, (ax1, ax2) = freshfig("Well control -- modes", ncols=2, figsize=(10, 4))
+fig, (ax1, ax2) = plt.subplots(num="Well control -- modes", clear=True, ncols=2, figsize=(10, 4))
 
 ax1.plot(tt, prod_rate, label="Rate-controlled")
 ax1.plot(tt, prod_bhp, label="BHP-controlled")
@@ -163,7 +163,7 @@ err_P = np.abs(PP_replay - PP_rate).max()
 err_q = np.abs(replay.wells.actual_rates + q).max()
 assert err_P < 1e-12 and err_q < 1e-12, "The two controls are not each other's inverse!"
 
-fig, ax = freshfig("Well control -- duality", figsize=(6, 4))
+fig, ax = plt.subplots(num="Well control -- duality", clear=True, figsize=(6, 4))
 ax.plot(tt, prod_rate, lw=4, alpha=.4, label="Rate-controlled: $q$")
 ax.plot(tt, -replay.wells.actual_rates[0], "k--", lw=1,
         label="BHP-controlled by its own reported $p_\\mathrm{bh}$")

@@ -34,7 +34,7 @@ ring of well markers (hidden by `wells=dict(exclude=...)`); and the influx
 rates and aquifer pressure of the two models (right).
 """
 
-from mpl_tools.place import freshfig
+import matplotlib.pyplot as plt
 import numpy as np
 from scipy.ndimage import uniform_filter as smooth
 
@@ -92,7 +92,7 @@ tau = W_ei / (q_fin[0] / (p_i - p_bh))
 assert np.isclose(np.log(q_fin[0] / q_fin[-1]) / (tt[-1] - tt[0]), 1 / tau, rtol=.25)
 
 ## Plot
-fig, axs = freshfig("Aquifer", ncols=3, figsize=(12, 3.8))
+fig, axs = plt.subplots(num="Aquifer", clear=True, ncols=3, figsize=(12, 3.8))
 kws: dict = dict(finalize=False, labels=False, colorbar=False)
 k = nSteps // 3
 kws["wells"] = dict(exclude=["Aq"])  # the contact is drawn as a stroke instead

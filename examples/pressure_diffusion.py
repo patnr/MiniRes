@@ -42,7 +42,7 @@ In the figures:
   `P0` is ignored, and the level is merely that of the grounded cell.
 """
 
-from mpl_tools.place import freshfig
+import matplotlib.pyplot as plt
 import numpy as np
 
 from minires import ResSim
@@ -79,8 +79,8 @@ vmax = 1.05*np.abs(elliptic).max()
 kws: dict = dict(levels=np.linspace(-vmax, vmax, 21), cmap="RdBu_r",
                  colorbar=False, finalize=False, wells=dict(size=.4))
 
-fig, axs = freshfig("Pressure diffusion", nrows=2, ncols=2,
-                    sharex=True, sharey=True, figsize=(7, 6))
+fig, axs = plt.subplots(num="Pressure diffusion", clear=True, nrows=2, ncols=2,
+                        sharex=True, sharey=True, figsize=(7, 6))
 for ax, k in zip(axs.ravel(), snapshots + [None]):
     if k is None:
         cc = model.plt_field(ax, elliptic, **kws, title="$c_t = 0$: instant")
@@ -92,8 +92,8 @@ for ax, k in zip(axs.ravel(), snapshots + [None]):
 fig.colorbar(cc, ax=axs, shrink=.6, label="$p - p_0$")
 
 ## Plot: how much of the eventual response has arrived, and where
-fig, (ax1, ax2) = freshfig("Pressure diffusion -- profiles & gauge",
-                           ncols=2, figsize=(10, 4))
+fig, (ax1, ax2) = plt.subplots(num="Pressure diffusion -- profiles & gauge", clear=True,
+                               ncols=2, figsize=(10, 4))
 
 # Sample along the y=0 edge, stopping short of the (anti-symmetric) corner,
 # where the elliptic reference vanishes and the ratio below is meaningless.

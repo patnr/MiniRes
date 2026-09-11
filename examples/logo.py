@@ -27,7 +27,7 @@ the cells flat, up to those faces, with a pixelated outline.
 
 from typing import Any
 
-from mpl_tools.place import freshfig
+import matplotlib.pyplot as plt
 import numpy as np
 from minires import ResSim
 from minires.plotting import show
@@ -71,7 +71,7 @@ assert (SS[:, ~model.active.ravel()] == 0).all()
 # A colour per marker: keyed by well name, and, the eyes being one well of two
 # completions, a colour per *completion* for them (left eye first, ref
 # `minires.wells.Wells.xy`).
-fig, ax = freshfig("Logo", figsize=(5, 5))
+fig, ax = plt.subplots(num="Logo", clear=True, figsize=(5, 5))
 model.plt_field(ax, SS[-1], "oil", colorbar=False, labels=False, finalize=False, title="",
                 wells=dict(exclude=["Aq"], size=1.5, text=False, dot=False))
 if "Aq" in model.wells.names:

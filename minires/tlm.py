@@ -187,8 +187,8 @@ from typing import Any, Callable, NamedTuple
 import numpy as np
 from scipy import sparse
 from scipy.sparse.linalg import splu
+from struct_tools import AlignedRepr
 
-from minires._repr import AlignedRepr
 from minires.core import ResSim
 
 

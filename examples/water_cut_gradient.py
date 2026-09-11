@@ -55,7 +55,6 @@ In the figure:
 
 from dataclasses import replace
 
-from mpl_tools.place import freshfig
 import matplotlib.pyplot as plt
 import numpy as np
 from scipy.ndimage import uniform_filter as smooth
@@ -122,8 +121,8 @@ assert abs(fd_logK - directional_logK) < 1e-4 * abs(directional_logK), (fd_logK,
 assert abs(fd_bhp - directional_bhp) < 1e-4 * abs(directional_bhp), (fd_bhp, directional_bhp)
 
 ## Plot
-fig, axs = freshfig("Water-cut gradient", ncols=2, nrows=2, figsize=(10, 8),
-                    gridspec_kw={'width_ratios': (1, 1.2)})
+fig, axs = plt.subplots(num="Water-cut gradient", clear=True, ncols=2, nrows=2, figsize=(10, 8),
+                        gridspec_kw={'width_ratios': (1, 1.2)})
 
 ax = axs[0, 0]
 model.plt_field(ax, logK, title="$\\log K$", cmap="viridis", levels=17,

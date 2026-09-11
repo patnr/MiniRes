@@ -76,8 +76,7 @@ an oil above it is **undersaturated**, and the amount of gas it holds is the
 from dataclasses import dataclass
 
 import numpy as np
-
-from minires._repr import AlignedRepr
+from struct_tools import AlignedRepr
 
 
 @dataclass

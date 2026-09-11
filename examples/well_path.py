@@ -43,7 +43,7 @@ In the figures:
   faster -- the near half of the reservoir having been flooded preferentially.
 """
 
-from mpl_tools.place import freshfig
+import matplotlib.pyplot as plt
 import numpy as np
 
 from minires import ResSim, well_path
@@ -86,8 +86,8 @@ for model in [path, onbhp]:
     assert np.allclose(model.wells.rates_by_well, [[1], [-1]])   # (nWell, nSteps)
 
 ## Plot: the resulting sweeps
-fig, axs = freshfig("Well path -- sweep", ncols=2, sharex=True, sharey=True,
-                    figsize=(9, 4))
+fig, axs = plt.subplots(num="Well path -- sweep", clear=True, ncols=2, sharex=True, sharey=True,
+                        figsize=(9, 4))
 for ax, (name, model, SS) in zip(axs, [("Point injector", point, SS_point),
                                        ("Path injector", path, SS_path)]):
     model.plt_field(ax, SS[-1], "oil", finalize=False, colorbar=False,
@@ -95,7 +95,7 @@ for ax, (name, model, SS) in zip(axs, [("Point injector", point, SS_point),
 fig.tight_layout()
 
 ## Plot: how the rate gets allocated along the path, and what is produced
-fig, (ax1, ax2) = freshfig("Well path -- allocation", ncols=2, figsize=(10, 4))
+fig, (ax1, ax2) = plt.subplots(num="Well path -- allocation", clear=True, ncols=2, figsize=(10, 4))
 
 yy = xy[:, 1]
 ax1.plot(yy, path.wells.actual_rates[inj, -1], label="Rate-controlled: $w \\propto WI$")
