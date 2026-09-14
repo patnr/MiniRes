@@ -115,6 +115,7 @@ and drilling extra wells between the existing ones is **infill drilling**.
 """
 
 from dataclasses import dataclass
+from fnmatch import fnmatchcase
 from typing import TYPE_CHECKING, Any
 
 import numpy as np
@@ -552,6 +553,8 @@ class Wells(AlignedRepr):
         undecided by it, i.e. those with no spec or a vanishing one (as under
         pure BHP control), fall back on the `actual_rates` of the latest `sim`,
         if there has been one. Only the truly undecided are then `0`.
+
+        PS: A safer approach to tracking injectors and producers is `.which("name*")`.
         """
         sgn = np.zeros(self.nComp, int)
         for rates in [self.rates, self.actual_rates]:
@@ -559,6 +562,40 @@ class Wells(AlignedRepr):
                 q = np.nansum(rates, axis=1)
                 sgn = np.where(sgn, sgn, (q > 0).astype(int) - (q < 0))
         return sgn
+
+    def which(self, *patterns: str) -> np.ndarray:
+        """Indices of the *completions* of the wells whose `names` match a pattern.
+
+        The patterns are `fnmatch` globs (`"Prd*"`, `"P?"`), or plain names.
+        Since the names are per *well*, while the arrays -- `xy`, `rates`,
+        `actual_rates`, ... -- are per completion, the match is expanded through
+        `group`. This is therefore how to address a *group* of wells in them:
+
+        >>> from minires import ResSim
+        >>> model = ResSim(Lx=1, Ly=1, Nx=10, Ny=10, wells=[
+        ...     dict(name="Inj", path=[[.05, .05], [.45, .05]], rate=+1, rw=1e-2),
+        ...     dict(name="Prd1", xy=[.95, .95], rate=-.5),
+        ...     dict(name="Prd2", xy=[.95, .05], rate=-.5),
+        ... ])
+        >>> model.wells.which("Prd*")
+        array([5, 6])
+        >>> model.wells.which("Inj")  # a multi-completion well: all of its rows
+        array([0, 1, 2, 3, 4])
+        >>> model.wells.rates[model.wells.which("Prd*")].ravel()
+        array([-0.5, -0.5])
+
+        The selection being by name, it is unaffected by the controls -- unlike
+        `signs`, which reads `0` for a well shut over the whole horizon -- and
+        does not require the group to be contiguous.
+        """
+        names = self.names if self.names is not None else range(self.nWell)
+        sel = [
+            i
+            for i, nm in enumerate(names)
+            if any(fnmatchcase(str(nm), p) for p in patterns)
+        ]
+        group = np.arange(self.nComp) if self.group is None else self.group
+        return np.flatnonzero(np.isin(group, sel))
 
     def at_time(self, spec: str, absent: float, k: int) -> np.ndarray:
         """Lookup the `spec` (`"rates"`/`"bhp"`) at time `k`.

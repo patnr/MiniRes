@@ -114,7 +114,8 @@ class Plot2D:
         (an aquifer's ring of contacts, say; ref `minires.wells.aquifer_WI`),
         and `color` may also be given *per well*, as `{name: color}` (a list of
         colors, one per completion, for a multi-completion well; the wells left
-        out keep the default of their sign).
+        out keep the default of their sign). Both take glob patterns
+        (`"Prd*"`), being matched by `minires.wells.Wells.which`.
         """
         # Populate kwargs with fallback style
         kwargs = {**styles["default"], **styles[style], **kwargs}
@@ -220,8 +221,11 @@ class Plot2D:
             sgn = self.wells.signs
             # Label the completions by their well's name, if there are any
             names = None
-            if self.wells.names is not None and self.wells.group is not None:
-                names = np.asarray(self.wells.names)[self.wells.group]
+            if self.wells.names is not None:
+                # Expand to one per completion (ref `minires.wells.Wells.group`)
+                group = self.wells.group
+                group = np.arange(self.wells.nComp) if group is None else group
+                names = np.asarray(self.wells.names)[group]
             producer_colors = wells == "color"
             if producer_colors:
                 # Colors matching `plt_production` of the producers
@@ -234,10 +238,9 @@ class Plot2D:
                 wells = dict(wells)  # NB: copy -- popped from below
             # Colors given per well (`{name: color}`) become one per completion
             if isinstance(by_name := wells.get("color"), dict):
-                assert names is not None, "`wells['color']` by name needs them named."
                 cols = np.full(self.wells.nComp, None, object)
                 for nm, c in by_name.items():
-                    which = np.nonzero(names == nm)[0]
+                    which = self.wells.which(nm)
                     assert len(which), f"No well named {nm}."
                     cs = len(which) * [c] if isinstance(c, str) else list(c)
                     assert len(cs) == len(which), f"{nm} has {len(which)} completions."
@@ -247,8 +250,7 @@ class Plot2D:
             # Hide the wells named by `exclude` (an aquifer's ring of contacts, say)
             shown = np.ones(self.wells.nComp, bool)
             if (exclude := wells.pop("exclude", None)) is not None:
-                assert names is not None, "`wells['exclude']` needs the wells named."
-                shown = ~np.isin(names, np.ravel(exclude))
+                shown[self.wells.which(*np.ravel(exclude))] = False
             for s in [-1, +1, 0]:
                 sel = (sgn == s) & shown
                 if np.any(sel):  # NB: skip, lest empty artists upset the layout

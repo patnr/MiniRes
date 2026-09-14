@@ -604,6 +604,63 @@ def test_well_signs_fall_back_on_the_realized_rates():
     assert np.all(model.wells.actual_rates[0] > 0)
 
 
+def test_which_selects_by_name():
+    """A group is addressed by name -- through `group`, and regardless of order."""
+    model = ResSim(Lx=1, Ly=1, Nx=10, Ny=10, wells=[
+        dict(name="Prd0", xy=[.95, .95], rate=-.5),
+        dict(name="Inj", path=[[.05, .05], [.45, .05]], rate=+1, rw=1e-2),
+        dict(name="Prd1", xy=[.95, .05], rate=-.5),
+    ])
+    assert list(model.wells.which("Prd*")) == [0, 6]          # not contiguous
+    assert list(model.wells.which("Inj")) == [1, 2, 3, 4, 5]  # 5 completions, 1 well
+    assert list(model.wells.which("Prd0", "Prd1")) == [0, 6]  # several patterns
+    assert list(model.wells.which("Prd")) == []               # no implicit prefixing
+
+
+def test_which_falls_back_on_the_index_names():
+    """An unnamed well is named by its index -- as in `Wells.from_records`."""
+    model = ResSim(Lx=1, Ly=1, Nx=8, Ny=8,
+                   wells=Wells(xy=[[0, 0], [1, 1]], rates=[[1.], [-1.]]))
+    assert list(model.wells.which("1")) == [1]
+
+
+def test_which_is_indifferent_to_the_controls():
+    """Unlike `signs`, which cannot tell a shut well from an undecided one."""
+    model = ResSim(Lx=1, Ly=1, Nx=8, Ny=8, wells=[
+        dict(name="Inj", xy=[0, 0], rate=+1),
+        dict(name="Prd0", xy=[1, 1], rate=-1),
+        dict(name="Prd1", xy=[1, 0], rate=0),  # shut for the whole horizon
+    ])
+    assert list(model.wells.signs) == [+1, -1, 0]     # the shut one: undecided
+    assert list(model.wells.which("Prd*")) == [1, 2]  # but a producer nonetheless
+
+
+def test_well_markers_are_labelled_without_a_group():
+    """`names` alone suffices: absent a `group`, completions are 1-1 with wells."""
+    import matplotlib
+
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
+
+    model = ResSim(Lx=1, Ly=1, Nx=8, Ny=8,
+                   wells=Wells(xy=[[0, 0], [1, 1], [1, 0]],
+                               rates=[[1.], [-.5], [-.5]],
+                               names=["I1", "P1", "P2"]))
+    assert model.wells.group is None
+    _, ax = plt.subplots()
+    try:
+        model.plt_field(ax, np.zeros(model.Nxy), finalize=False)
+        labels = sorted(t.get_text() for t in ax.texts)
+        ax.clear()
+        model.plt_field(ax, np.zeros(model.Nxy), finalize=False,
+                        wells=dict(exclude=["P*"]))  # glob, not just plain names
+        remaining = sorted(t.get_text() for t in ax.texts)
+    finally:
+        plt.close("all")
+    assert labels == ["I1", "P1", "P2"]
+    assert remaining == ["I1"]
+
+
 def test_well_markers_are_numbered_per_sign():
     """As `plt_production` numbers them: per sign, not as in the unified `Wells.xy`."""
     import matplotlib

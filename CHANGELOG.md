@@ -31,8 +31,11 @@ relative permeabilities; practical units.
   cell traversed. Under BHP control the split between them is solved for;
   under rate control it is prescribed.
 - **Well grouping**: `wells.group` maps completions to their well and
-  `wells.names` names them -- hence `wells.nWell`, `wells.rates_by_well`, and
-  plot markers labelled by name.
+  `wells.names` names them -- hence `wells.nWell`, `wells.rates_by_well`,
+  `wells.which("Prd*")` (the rows a named *group* of wells occupies in the
+  per-completion arrays -- unlike `wells.signs`, indifferent to the controls),
+  and plot markers labelled by name (`plt_field`'s `wells=dict(exclude=...)`
+  and per-well `color` taking the same patterns).
 - `ResSim.well_controls(S, P, k)`: the feedback-control hook (replacing
   `dynamic_rate`, ref Changed), returning `dict(rates=..., bhp=...)`, so an
   override governs the wells' *modes* too -- approximating, lagged by a step,
