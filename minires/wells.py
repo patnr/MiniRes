@@ -41,13 +41,16 @@ plot labels); the physics never groups.
 
 ## Theory
 
-A well is either an **injector** or a **producer** -- the terminal states of the
-sources and sinks, $q$, of the governing equations.
-The two are not distinct objects here: a well is an injector or a producer
-merely by the *sign* of its rate (ref `minires.wells.Wells.rates`), and
-under BHP control not even by that, the direction being left to the pressures
-(ref `minires.wells.Wells.bhp`).
-Its **completion** is the equipment that connects the **wellbore** to the rock,
+A well is either an **injector** or a **producer**.
+In the governing equations implemented in `core.py`, however,
+the only thing distinguishing sources and sinks are their sign.
+Reflecting this unity, injectors and producers are deliberately
+not distinct here except by the *sign* of its rate (ref `minires.wells.Wells.rates`),
+and under BHP control not even by that, the direction being left to the pressures
+(ref `minires.wells.Wells.bhp`). However, a common practice is for users
+themselves to manually keep track of which wells are producers/injectors.
+
+A well's **completion** is the equipment that connects the **wellbore** to the rock,
 whose interface is the **sandface**; it may be *open hole*, or cased and
 **perforated**. A well may have several completions, e.g. one per layer,
 or (here) one per grid cell traversed by the well path -- which the model
