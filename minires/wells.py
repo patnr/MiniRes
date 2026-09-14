@@ -1,21 +1,11 @@
 """The wells: their configuration, their bookkeeping, and the well model.
 
-Everything here depends on the wells alone, on the *geometry* they sit in
-(`minires.grid.Grid2D`), and -- for the well index -- on the permeability
-`K`. What couples the wells to the *fluids* (the mobilities of
-`minires.fluids.Fluid.RelPerm`) or to the linear system (the source field, the
-BHP contributions) stays with the simulator, which reads the arrays assembled
-here.
+From the perspective of the simulator, only the the **completion** matters,
+not the well.
+Wells (composing several completions, typically spanning multiple cells)
+are a setup and *reporting* (`Wells.rates_by_well`) concept only.
 
-The unit of account is the **completion**, not the well: a well may span
-several cells (ref `well_path`), and it is the completions that the model
-solves for. Hence `Wells.nComp` counts the rows of every array here, whereas
-`Wells.nWell` counts the wells that `Wells.group` says they compose --
-a distinction that serves the *reporting* alone (`Wells.rates_by_well`, the
-plot labels); the physics never groups.
-
-
-.. note:: Spreading a well over its neighbouring cells was implemented, then omitted.
+.. note:: Spreading a well over its neighbouring cells was tried, then omitted.
 
     Snapped to a cell centre, a well has its every effect a staircase function
     of its coordinates -- constant within a cell -- which leaves an
@@ -354,8 +344,12 @@ def boundary_faces(model: "ResSim", xy: Any, faces: str = "WESN") -> np.ndarray:
 class Wells(AlignedRepr):
     """The wells of a `minires.ResSim`: the flat, per-completion arrays.
 
-    These arrays *are* the configuration (ref `from_records`), and they are
-    meant to be written to, as an ensemble or optimisation loop does:
+    Contains arrays which specify the well (completions) and may be written to.
+    However, the constructor offers a more convenient API, via `from_records`,
+    but these records themselves are *not* retained (and cannot go stale).
+
+    A `Wells` may also be built before it has a grid to snap to -- as below,
+    where it is the assignment to the model that binds (and snaps) it.
 
     >>> from minires import ResSim
     >>> model = ResSim(Lx=1, Ly=1, Nx=16, Ny=16,
@@ -364,13 +358,8 @@ class Wells(AlignedRepr):
     >>> model.wells.nComp
     2
 
-    Assigning one normalizes it (`__setattr__`): the positions get snapped onto
-    the grid nodes, the schedules reshaped to `(nComp, nTime)`, and so on.
-    A `Wells` may also be built before it has a grid to snap to -- as above,
-    where it is the assignment to the model that binds (and snaps) it.
-
-    Ref `from_records` for the convenient, well-shaped way to configure them,
-    and `minires.ResSim.wells` for the attribute that holds them.
+    Assigning to `minires.ResSim.wells` normalizes it (`__setattr__`): positions
+    get snapped onto the grid nodes, schedules reshaped to `(nComp, nTime)`, etc.
     """
 
     # Dont use dataclass repr
@@ -661,12 +650,6 @@ class Wells(AlignedRepr):
 
             `rate=0` shuts it in. This is deliberate: an uncontrolled well would
             silently be a shut one.
-
-        .. note:: The records are *not* retained.
-
-            The arrays they produce are the whole of the configuration, so
-            there is nothing to fall out of step with a subsequent edit of them
-            (which is what the `repr` therefore reports).
         """
         keys = ("name", "xy", "path", "rate", "bhp", "rw", "skin", "WI", "aquifer")
         if isinstance(wells, dict):
