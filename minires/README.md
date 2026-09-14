@@ -276,14 +276,3 @@ with no Newton iteration on $p$, and no PVT properties
   *analytical* inference method -- the line-source solution, the Horner plot, and the
   semilog-derivative plateau that `examples.buildup` reads $\mathbf{K}$ off,
   are all solutions of the *linear* diffusion equation.
-
-<!-- markdownlint-configure-file
-{
-  "heading-increment": false,
-  "emphasis-style": false,
-  "no-inline-html": {
-    "allowed_elements": [ "img", "sup" ]
-  },
-  "ul-indent": { "indent": 2 }
-}
--->
