@@ -15,24 +15,22 @@ app = marimo.App(width="medium")
 
 @app.cell(hide_code=True)
 def _(mo):
-    mo.md(
-        r"""
-        # MiniRes
+    mo.md(r"""
+    # MiniRes
 
-        A [2D two-phase reservoir simulator](https://patnr.github.io/MiniRes/)
-        running **in this tab** -- the Python is WebAssembly, there is no server.
-        Drag the sliders: the simulation re-runs (the following code):
+    A [2D two-phase reservoir simulator](https://patnr.github.io/MiniRes/)
+    running **in this tab** -- the Python is WebAssembly, there is no server.
+    Drag the sliders: the simulation re-runs (the following code):
 
-        ```python
-        model = ResSim(Lx=1, Ly=1, Nx=32, Ny=32,
-                       fluid=dict(vo=M.value),
-                       wells=[dict(name="Inj",  xy=[0, 0], rate=+1),
-                              dict(name="Prod", xy=[1, 1], rate=-1)])
+    ```python
+    model = ResSim(Lx=1, Ly=1, Nx=32, Ny=32,
+                   fluid=dict(vo=M.value),
+                   wells=[dict(name="Inj",  xy=[0, 0], rate=+1),
+                          dict(name="Prod", xy=[1, 1], rate=-1)])
 
-        S, P = model.sim(0.7/nSteps, nSteps, np.zeros(model.Nxy), pbar=False)
-        ```
-        """
-    )
+    S, P = model.sim(0.7/nSteps, nSteps, np.zeros(model.Nxy), pbar=False)
+    ```
+    """)
     return
 
 
@@ -70,7 +68,7 @@ def _(mo):
 
 
 @app.cell
-def _(ResSim, M, np, nSteps):
+def _(M, ResSim, nSteps, np):
     model = ResSim(Lx=1, Ly=1, Nx=32, Ny=32,
                    fluid=dict(vo=M.value),
                    wells=[dict(name="Inj",  xy=[0, 0], rate=+1),
@@ -93,19 +91,17 @@ def _(MaxNLocator, P, S, k, model, plt):
 
 @app.cell(hide_code=True)
 def _(minires, mo):
-    mo.md(
-        rf"""
-        At $\mu_o/\mu_w = 1$ the front is the symmetric arc that gives the
-        quarter five-spot its name. Raising the ratio makes the water the more
-        mobile phase: it channels along the diagonal and breaks through early,
-        leaving the flanks unswept -- an unfavourable mobility ratio.
+    mo.md(rf"""
+    At $\mu_o/\mu_w = 1$ the front is the symmetric arc that gives the
+    quarter five-spot its name. Raising the ratio makes the water the more
+    mobile phase: it channels along the diagonal and breaks through early,
+    leaving the flanks unswept -- an unfavourable mobility ratio.
 
-        [Docs](https://patnr.github.io/MiniRes/minires.html)
-        &middot; [More examples](https://patnr.github.io/MiniRes/examples.html)
-        &middot; [GitHub](https://github.com/patnr/MiniRes)
-        &middot; minires {minires.__version__}
-        """
-    )
+    [Docs](https://patnr.github.io/MiniRes/minires.html)
+    &middot; [More examples](https://patnr.github.io/MiniRes/examples.html)
+    &middot; [GitHub](https://github.com/patnr/MiniRes)
+    &middot; minires {minires.__version__}
+    """)
     return
 
 
