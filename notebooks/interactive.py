@@ -65,14 +65,15 @@ def _(ResSim, M, np, nSteps):
                    wells=[dict(name="Inj",  xy=[0, 0], rate=+1),
                           dict(name="Prod", xy=[1, 1], rate=-1)])
 
-    S, _P = model.sim(0.7/nSteps, nSteps, np.zeros(model.Nxy), pbar=False)
-    return S, model
+    S, P = model.sim(0.7/nSteps, nSteps, np.zeros(model.Nxy), pbar=False)
+    return P, S, model
 
 
 @app.cell
-def _(S, k, model, plt):
-    fig, ax = plt.subplots(figsize=(5, 4.2))
-    model.plt_field(ax, S[k.value], "oil")
+def _(P, S, k, model, plt):
+    fig, (ax1, ax2) = plt.subplots(ncols=2, figsize=(10, 4.2))
+    model.plt_field(ax1, S[k.value], "oil")
+    model.plt_field(ax2, P[k.value], title="Pressure")
     fig
     return
 
