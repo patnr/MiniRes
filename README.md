@@ -12,7 +12,7 @@ using TPFA (two-point flux approximation).
 - **Adjoint** model included; verified against finite differences.
 - **Python**: [![PyPI](https://img.shields.io/pypi/v/minires?logo=pypi&logoColor=white)](https://pypi.org/project/minires/) (`pip install minires`), or demo it in a web browser via
   [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/patnr/MiniRes/blob/main/notebooks/colab.ipynb) (backend: Google)
-  or [![WASM](https://img.shields.io/static/v1?label=WASM&message=by%20marimo&logo=webassembly&color=654ff0)](https://patnr.github.io/MiniRes/wasm/) (no backend!).
+  or [![marimo](https://marimo.io/shield.svg)](https://patnr.github.io/MiniRes/wasm/) (no backend!).
 - **Fast**: similar to [JutulDarcy's](https://github.com/sintefmath/JutulDarcy.jl) (but no JIT startup/wait) at equal accuracy on 2D two-phase cases of size $100$ – $10^5$.
 - **Reliable**: reproduces the numbers of the [Matlab code (2007)](http://folk.ntnu.no/andreas/papers/ResSimMatlab.pdf) from NTNU/Sintef by Jørg E. Aarnes, Tore Gimse, and Knut–Andreas Lie.
   Further validated against Buckley–Leverett's
