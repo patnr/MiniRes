@@ -71,10 +71,9 @@ def _(ResSim, M, np, nSteps):
 
 @app.cell
 def _(P, S, k, model, plt):
-    fig, (ax1, ax2) = plt.subplots(ncols=2, figsize=(10, 4.2))
-    model.plt_field(ax1, S[k.value], "oil")
-    model.plt_field(ax2, P[k.value], title="Pressure")
-    fig
+    _fig, (ax1, ax2) = plt.subplots(ncols=2, figsize=(10, 4.2))
+    model.plt_field(ax1, S[k.value], "oil", finalize=False)
+    model.plt_field(ax2, P[k.value], title="Pressure");  # shown by its `plt.show()`
     return
 
 
