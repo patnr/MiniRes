@@ -18,6 +18,18 @@ are tagged (no pre-release tags): an unreleased snapshot is pinned by commit has
 
 ## [Unreleased]
 
+### Changed
+
+- **`anim(S)`** now needs only the saturation trajectory: the second argument,
+  the water saturation at the producers, defaults to `S[1:]` at the cells of the
+  wells with negative rates (it stays available, e.g. for an observed series). The
+  returned `Animation` displays itself in a notebook (its `_repr_html_` is
+  `to_jshtml`), and in a notebook the figure is closed, so the final frame is no
+  longer also displayed as a static figure -- no more `HTML(...)`, `%%capture`
+  or `rcParams["animation.html"]` needed around it.
+- `plt_field`/`plt_production` no longer call `plt.show()` under marimo, whose
+  backend renders each as console media on top of the figure the cell outputs.
+
 ## [0.3.0] -- 2026-09-15
 
 Renamed to **MiniRes**, and released on PyPI; wells rebuilt (records, paths, BHP control, grouping, a

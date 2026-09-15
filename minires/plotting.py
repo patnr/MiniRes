@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING, Any, Optional, cast
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
+from matplotlib import animation
 from matplotlib.colors import BoundaryNorm
 from matplotlib.ticker import MaxNLocator, MultipleLocator
 
@@ -391,18 +392,31 @@ class Plot2D:
         tight_show(ax.figure, finalize)
         return hh
 
-    # Note: See note in mpl_setup.py about properly displaying the animation.
     def anim(
         self: "ResSim",
-        wsats: np.ndarray,
-        prod: np.ndarray,
+        S: np.ndarray,
+        prod: np.ndarray | None = None,
         title: str = "",
         figsize: tuple = (10, 3.5),
         pause: int = 200,
         animate: bool = True,
         **kwargs,
     ) -> Any:
-        """Animate the saturation and production time series."""
+        """Animate the saturation field, alongside the oil saturation at the producers.
+
+        `S` is the saturation trajectory that `sim` returns, `(nSteps + 1, Nxy)`.
+        `prod`, the water saturation at the producers over time, `(nSteps, nPrd)`,
+        defaults to `S[1:]` at the cells of the wells with negative rates (ref
+        `minires.wells.Wells.signs`) -- `S[0]` being the initial condition, before
+        any production. Pass it to show another series there, e.g. the observed one.
+
+        The returned `Animation` displays itself as a cell's output in a notebook,
+        where the figure is closed, so that its final frame is not also displayed
+        as a static figure. `kwargs` go to `plt_field`.
+        """
+        if prod is None:
+            xy = self.wells.xy[self.wells.signs < 0]
+            prod = S[1:, self.xy2ind(*xy.T)]
 
         # Create figure and axes
         title = "Animation" + ("-- " + title if title else "")
@@ -413,15 +427,13 @@ class Plot2D:
         fig.suptitle(title)  # coz animation never (any backend) displays title
         # Saturations
         kwargs.update(wells="color", colorbar=True, finalize=False)
-        ax2.cc = self.plt_field(ax2, wsats[-1], "oil", **kwargs)
+        ax2.cc = self.plt_field(ax2, S[-1], "oil", **kwargs)
         # Production
         hh = self.plt_production(ax1, prod, legend_outside=False, finalize=False)
         fig.tight_layout()
 
         if animate:
-            from matplotlib import animation
-
-            tt = np.arange(len(wsats))
+            tt = np.arange(len(S))
 
             def update_fig(iT):
                 # Update field.
@@ -432,29 +444,32 @@ class Plot2D:
                 except ValueError:
                     pass  # occurs when re-running script
                 kwargs.update(wells=False, colorbar=False)
-                ax2.cc = self.plt_field(ax2, wsats[iT], "oil", **kwargs)
+                ax2.cc = self.plt_field(ax2, S[iT], "oil", **kwargs)
 
                 # Update production lines
                 if iT >= 1:
                     for h, p in zip(hh, prod.T):
                         h.set_data(tt[1 : 1 + iT], 1 - p[:iT])
 
-            ani = animation.FuncAnimation(
-                fig,
-                update_fig,
-                len(tt),
-                blit=False,
-                interval=pause,
-                # Prevent busy/idle indicator constantly flashing, despite %%capture
-                # and even manually clearing the output of the calling cell.
-                repeat=False,  # flashing stops once the (unshown) animation finishes.
-                # An alternative solution is to do this in the next cell:
-                # animation.event_source.stop()
-                # but it does not work if using "run all", even with time.sleep(1).
-            )
-
+            # `repeat=False`: else the busy/idle indicator of a notebook keeps
+            # flashing (despite `%%capture`, even after clearing the output).
+            ani = Animation(fig, update_fig, len(tt), blit=False, interval=pause,
+                            repeat=False)
+            if is_inline():
+                plt.close(fig)  # else displayed (statically) beside the animation
             return ani
 
+
+class Animation(animation.FuncAnimation):
+    """A `FuncAnimation` that a notebook displays as its JavaScript player.
+
+    matplotlib's own `_repr_html_` consults `rcParams["animation.html"]`, whose
+    default (`"none"`) displays nothing but the `repr`; this one always renders
+    `to_jshtml`. Returned by `Plot2D.anim`.
+    """
+
+    def _repr_html_(self) -> str:
+        return self.to_jshtml()
 
 def show(block: Optional[bool] = None) -> None:
     """Display the figures, whether run as script, in IPython, or in a notebook.
@@ -558,9 +573,15 @@ def is_inline() -> bool:
 
 
 def tight_show(figure: Any, enabled: bool) -> None:
+    """`tight_layout`, then `plt.show()` -- except under marimo, whose backend renders
+    every `plt.show()` as console media, on top of the figure the cell outputs.
+    (The `inline` one displays *and closes* the figure, which callbacks of
+    `ipywidgets` -- with no cell end to flush the figures at -- rely on.)
+    """
     if enabled:
         figure.tight_layout()
-        plt.show()
+        if "marimo" not in mpl.get_backend():
+            plt.show()
 
 
 def _get_ipython() -> Any:

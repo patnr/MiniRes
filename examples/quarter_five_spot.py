@@ -137,7 +137,7 @@ model.plt_production(axs[1], np.column_stack([SS_exp[1:, prd], SS_sch[1:, prd]])
 fig.tight_layout()
 
 ## Animation
-animation = model.anim(SS_exp, SS_exp[1:, [prd]])
+animation = model.anim(SS_exp)
 
 # Regression values, checked by `tests/test_examples.py`.
 # The sub-sampling `[::600]` matches that of the matlab reference values.
