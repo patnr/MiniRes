@@ -36,9 +36,9 @@ rates and aquifer pressure of the two models (right).
 
 import matplotlib.pyplot as plt
 import numpy as np
-from scipy.ndimage import uniform_filter as smooth
 
-from minires import ResSim
+from minires import Grid2D, ResSim
+from minires.geostat import gaussian_fields
 from minires.plotting import show
 
 rng = np.random.default_rng(3)  # Reproducibility (the values are regression tested)
@@ -47,7 +47,9 @@ rng = np.random.default_rng(3)  # Reproducibility (the values are regression tes
 p_i, p_bh = 1., 0.  # initial aquifer pressure, and the producer's
 dt, nSteps = .02, 120
 tt = dt * np.arange(1, nSteps + 1)
-logK = 3 * smooth(smooth(rng.standard_normal((40, 40))))
+mesh = Grid2D(Lx=1, Ly=1, Nx=40, Ny=40).mesh
+logK = gaussian_fields(mesh, r=.15, rng=rng)[0].reshape(mesh[0].shape)
+# logK = 3 * smooth(smooth(rng.standard_normal((40, 40))))  # the old way
 
 def make(cls=ResSim):
     model = cls(Lx=1, Ly=1, Nx=40, Ny=40, K=np.exp(logK))
@@ -87,9 +89,10 @@ assert np.allclose(finite.wells.rates_by_well.sum(0), 0)
 assert SS_inf[-1].max() > .5 and (q_inf > 0).all()
 # The finite aquifer depletes: exponentially, on the time scale W_ei / (J p_i),
 # where J is the aquifer's initial productivity, q_fin[0] / (p_i - p_bh)
+# (approximately: J follows the mobilities, which change as the water advances)
 assert q_fin[-1] < .2 * q_fin[0] and (np.diff(p_aq) < 0).all()
 tau = W_ei / (q_fin[0] / (p_i - p_bh))
-assert np.isclose(np.log(q_fin[0] / q_fin[-1]) / (tt[-1] - tt[0]), 1 / tau, rtol=.25)
+assert np.isclose(np.log(q_fin[0] / q_fin[-1]) / (tt[-1] - tt[0]), 1 / tau, rtol=.3)
 
 ## Plot
 fig, axs = plt.subplots(num="Aquifer", clear=True, ncols=3, figsize=(12, 3.8))

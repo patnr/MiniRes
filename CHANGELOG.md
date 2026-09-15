@@ -23,6 +23,11 @@ relative permeabilities; practical units.
 
 ### Added
 
+- **`minires.geostat`**: Gaussian random fields -- `gaussian_fields`, sampled
+  from a Gaussian variogram of range `r`; `cov_sqrt`, the Cholesky factor of
+  their (dense) covariance; `funm_psd`, matrix functions of it -- moved here
+  from HistoryMatching's `tools/geostat.py`, which drew its prior ensembles
+  with them. Illustrated by `examples/random_fields.py`.
 - **Well records**: `model.wells = [dict(name="P1", xy=[1, 1], rate=-1), ...]`
   (or `ResSim(wells=[...])`), which `Wells.from_records` assembles into the
   per-completion arrays -- these remaining the whole of the (writable) config.
@@ -92,6 +97,10 @@ relative permeabilities; practical units.
 
 ### Changed
 
+- The heterogeneous examples (`aquifer`, `inactive_cells`,
+  `history_match_gradient`, `water_cut_gradient`) draw their `log K` from
+  `gaussian_fields` (range `0.15`, unit variance) rather than twice
+  box-filtered white noise, so their regression values and figures changed.
 - **BREAKING**: the project is **renamed to MiniRes**: the import is now
   `minires` (`from minires import ResSim`), the distribution `minires`, the
   repo <https://github.com/patnr/MiniRes> (CamelCase, a display name; GitHub

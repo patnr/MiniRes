@@ -2,8 +2,8 @@
 
 A five-spot: one injector at the centre, at a fixed rate, and four producers in
 the corners, on BHP control (so their rates are outcomes, and the flow splits
-among them as the heterogeneous -- smoothed, log-normal -- permeability
-dictates). The objective is the water cut at the NE producer at a time index
+among them as the heterogeneous -- log-normal, ref `examples.random_fields` --
+permeability dictates). The objective is the water cut at the NE producer at a time index
 just after its breakthrough, while it is rising fast.
 `minires.tlm.adjoint` returns its gradient with respect to every cell's
 $\\log K$ (and the initial state) *and* with respect to every producer's BHP
@@ -31,14 +31,15 @@ In the figure:
 - Bottom right: the gradient wrt. the BHP of each producer, per time step
   (`tlm.Gradient.bhp`). *Lowering* the NE well's BHP draws more of the
   injected water its way, hence an earlier breakthrough and a higher water cut
-  at the objective's time: its gradient is negative, throughout. The opposite
-  corner's (SW) is positive throughout: drawing more to it starves the NE
-  well. The neighbours' (NW, SE) are smaller and change sign over time:
-  drawing more flow towards a neighbour reshapes the stream tube to NE as much
-  as it starves it, and which effect wins depends on the heterogeneity and on
-  where the front is. All of them vanish from the objective's time step on --
-  a control cannot affect what came before it. Their sum over time is the
-  gradient with respect to a constant-in-time BHP.
+  at the objective's time: its gradient is negative, throughout. The other
+  three's are positive: drawing more to them starves the NE well. That they
+  are of a size, the neighbours' (NW, SE) no smaller than the opposite
+  corner's (SW), is a matter of the heterogeneity: drawing more flow towards a
+  neighbour also reshapes the stream tube to NE, which may help or hinder (for
+  another field, these may even change sign over time). All of them vanish
+  from the objective's time step on -- a control cannot affect what came
+  before it. Their sum over time is the gradient with respect to a
+  constant-in-time BHP.
 
 .. note:: The gradient is with respect to the *isotropic* $\\log K$.
 
@@ -57,9 +58,9 @@ from dataclasses import replace
 
 import matplotlib.pyplot as plt
 import numpy as np
-from scipy.ndimage import uniform_filter as smooth
 
-from minires import ResSim
+from minires import Grid2D, ResSim
+from minires.geostat import gaussian_fields
 from minires.plotting import show
 from minires.tlm import adjoint
 
@@ -67,7 +68,9 @@ rng = np.random.default_rng(1)  # Reproducibility (the values are regression tes
 
 ## Model: a five-spot on heterogeneous permeability
 grid: dict = dict(Lx=1, Ly=1, Nx=32, Ny=32)
-logK = 3 * smooth(smooth(rng.standard_normal((grid["Nx"], grid["Ny"]))))
+mesh = Grid2D(**grid).mesh
+logK = gaussian_fields(mesh, r=.15, rng=rng)[0].reshape(mesh[0].shape)
+# logK = 3 * smooth(smooth(rng.standard_normal((grid["Nx"], grid["Ny"]))))  # the old way
 model = ResSim(**grid, K=np.exp(logK), wells=[  # isotropic: K broadcast to both components
     dict(xy=[.5, .5], rate=+1, name="inj"),
     dict(xy=[1 , 1 ], bhp=0, rw=1e-3, name="NE"),
@@ -91,7 +94,7 @@ def water_cut(model, SS):
 
 
 fw = water_cut(model, SS)
-well, k = 0, 12  # NE, just after breakthrough (fw ≈ .5)
+well, k = 0, 13  # NE, just after breakthrough (fw ≈ .4)
 J = fw[k, well]
 
 ## Its gradient, by the adjoint

@@ -1,7 +1,7 @@
 """The gradient of a production-history misfit wrt. $\\log K$, and a few descent steps.
 
 The history-matching case, in its simplest form. A *truth* permeability field
-(smoothed, log-normal) produces the *observations*: the water cut at each of
+(log-normal, ref `examples.random_fields`) produces the *observations*: the water cut at each of
 the four producers of a five-spot, at every time step. The *prior* guess is
 homogeneous, $\\log K = 0$. The objective is the mean squared error of the
 prior's production history against the observations, and
@@ -43,9 +43,9 @@ In the figure:
 
 import matplotlib.pyplot as plt
 import numpy as np
-from scipy.ndimage import uniform_filter as smooth
 
 from minires import ResSim
+from minires.geostat import gaussian_fields
 from minires.plotting import show
 from minires.tlm import adjoint
 
@@ -81,7 +81,8 @@ def water_cut(model, SS):
 
 
 ## The truth, and the observations it produces
-logK_true = 3 * smooth(smooth(rng.standard_normal(model.shape)))
+logK_true = gaussian_fields(model.mesh, r=.15, rng=rng)[0].reshape(model.shape)
+# logK_true = 3 * smooth(smooth(rng.standard_normal(model.shape)))  # the old way
 truth = new_model(logK_true)
 obs = water_cut(truth, truth.sim(dt, nSteps, S0, pbar=False)[0])
 

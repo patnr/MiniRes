@@ -23,9 +23,9 @@ the half-cell margin around the inactive cells (as around the domain).
 
 import matplotlib.pyplot as plt
 import numpy as np
-from scipy.ndimage import uniform_filter as smooth
 
 from minires import ResSim
+from minires.geostat import gaussian_fields
 from minires.plotting import show
 
 rng = np.random.default_rng(3)  # Reproducibility (the values are regression tested)
@@ -40,7 +40,8 @@ outline = ((X - .5) / .47)**2 + ((Y - .5) / .4)**2 <= 1
 x_fault = .55 + .25 * (Y - .5)
 fault = (abs(X - x_fault) <= model.hx / 2 + 1e-9) & (Y > .3)
 model.active = outline & ~fault
-logK = 4 * smooth(smooth(rng.standard_normal(model.shape)))
+logK = gaussian_fields(model.mesh, r=.15, rng=rng)[0].reshape(model.shape)
+# logK = 4 * smooth(smooth(rng.standard_normal(model.shape)))  # the old way
 model.K = np.exp(logK)
 
 dt = .01

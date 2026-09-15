@@ -29,6 +29,10 @@ They double as regression tests: `tests/test_examples.py` runs them all
   at constant pressure, or depleting (Fetkovich: a `well_controls` override).
 - `examples.logo`: a smiley -- an outline and a hole cut out by `active`,
   an aquifer along the bottom -- for the picture alone.
+- `examples.random_fields`: the Gaussian random fields (`minires.geostat`) that
+  the heterogeneous examples draw their $\\log K$ from (and the tutorials of
+  HistoryMatching their prior ensembles), in 1D and 2D, and the effect of the
+  variogram's range.
 
 These concern the *well model* (`minires.wells.peaceman_WI`), i.e. the sub-grid
 relation between a well and the (much larger) cell that holds it:
