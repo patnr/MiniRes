@@ -1,9 +1,9 @@
 """MiniRes in the browser, with sliders: a [marimo](https://marimo.io) notebook.
 
 Exported to WebAssembly (Pyodide) by `.github/workflows/docs.yml`, and published at
-<https://patnr.github.io/MiniRes/wasm/>, in run mode with the code shown
-(`--show-code`): the cells that use MiniRes are visible, the plumbing (the
-`micropip` install, the sliders' layout) and the prose are `hide_code=True`. Also runs natively: `uv run marimo edit
+<https://patnr.github.io/MiniRes/wasm/>, in run mode with the code hidden: the
+essential snippet is quoted in the introduction's fenced block instead (showing
+the cells themselves, `--show-code`, was tried and found too busy). Also runs natively: `uv run marimo edit
 notebooks/interactive.py`.
 """
 
@@ -21,7 +21,16 @@ def _(mo):
 
         A [2D two-phase reservoir simulator](https://patnr.github.io/MiniRes/)
         running **in this tab** -- the Python is WebAssembly, there is no server.
-        Drag the sliders: the simulation re-runs.
+        Drag the sliders: the simulation re-runs (the following code):
+
+        ```python
+        model = ResSim(Lx=1, Ly=1, Nx=32, Ny=32,
+                       fluid=dict(vo=M.value),
+                       wells=[dict(name="Inj",  xy=[0, 0], rate=+1),
+                              dict(name="Prod", xy=[1, 1], rate=-1)])
+
+        S, P = model.sim(0.7/nSteps, nSteps, np.zeros(model.Nxy), pbar=False)
+        ```
         """
     )
     return
@@ -40,10 +49,11 @@ async def _():
 
     import matplotlib.pyplot as plt
     import numpy as np
+    from matplotlib.ticker import MaxNLocator
 
     from minires import ResSim
 
-    return ResSim, mo, np, plt
+    return MaxNLocator, ResSim, mo, np, plt
 
 
 @app.cell(hide_code=True)
@@ -60,8 +70,6 @@ def _(mo):
 
 @app.cell
 def _(ResSim, M, np, nSteps):
-    # A quarter five-spot: water injected in one corner, oil produced in the other.
-    # Rates are signed -- positive injects, negative produces. (`from minires import ResSim`)
     model = ResSim(Lx=1, Ly=1, Nx=32, Ny=32,
                    fluid=dict(vo=M.value),
                    wells=[dict(name="Inj",  xy=[0, 0], rate=+1),
@@ -72,11 +80,12 @@ def _(ResSim, M, np, nSteps):
 
 
 @app.cell
-def _(P, S, k, model, np, plt):
+def _(MaxNLocator, P, S, k, model, plt):
     fig, (ax1, ax2) = plt.subplots(ncols=2, figsize=(10, 4.2))
     model.plt_field(ax1, S[k.value], "oil")
+    # Levels fixed over time (the whole of `P`), at round numbers.
     model.plt_field(ax2, P[k.value], title="Pressure",
-                    levels=np.linspace(P.min(), P.max(), 11))  # fixed over time
+                    levels=MaxNLocator(11).tick_values(P.min(), P.max()))
     fig
     return
 

@@ -47,7 +47,7 @@ re-anchoring of the entry a page is opened at -- needed because pdoc's `scroll-b
 smooth` turns the load-time scroll to the URL's fragment into an animation aimed once at
 where that entry was when it began, which the figures being sized and MathJax typesetting
 then move out from under it, landing the reader ~600px past it), and an `index.html.jinja2` that redirects to the package page (pdoc would list the two roots there). pdoc cannot ship static assets itself, so the logo goes via `build.py`, like the figures; its own logo slot (the `nav_title` block) takes a URL configured in Python, which cannot be the page-relative one a nested page needs, so the `<img>` is in the template's sidebar head instead. Docstrings are pdoc-flavoured markdown with LaTeX math; `minires/README.md` is included into the package docstring via `.. include::`.
-- **WASM demo**: `uv run marimo export html-wasm notebooks/interactive.py -o docs/wasm --mode run --show-code -f` (the `wasm` group; run *after* the docs build, since it writes into `docs/`). Ref `notebooks/` below.
+- **WASM demo**: `uv run marimo export html-wasm notebooks/interactive.py -o docs/wasm --mode run -f` (the `wasm` group; run *after* the docs build, since it writes into `docs/`). Ref `notebooks/` below.
 
 The supported Python range is whatever `requires-python` in pyproject.toml says (currently `>=3.12`); the floor tracks Colab's Python so the package installs there without re-installs. CI tests 3.12–3.14 on ubuntu + macos.
 
@@ -121,7 +121,7 @@ build, not pytest. Both are linked from the root README's "Python" bullet and fr
   it does that the WASM one doesn't.
 - `interactive.py` is a [marimo](https://marimo.io) notebook: `uv run marimo edit
   notebooks/interactive.py` to work on it, and `uv run marimo export html-wasm
-  notebooks/interactive.py -o docs/wasm --mode run --show-code -f` to build the WASM, which
+  notebooks/interactive.py -o docs/wasm --mode run -f` to build the WASM, which
   `.github/workflows/docs.yml` does as a *second* step after the pdoc build, into the
   same Pages artifact (hence <https://patnr.github.io/MiniRes/wasm/>). Its `wasm`
   dependency group is marimo alone, kept out of `docs` (a much heavier install, and CI
@@ -140,7 +140,7 @@ the whole stack runs in Pyodide -- scipy's SuperLU (`splu`/`spilu`/`cg`), matplo
 re-verified in a browser) -- at some 2-5x native, i.e. ~0.4 s per slider move for the 32² x 28 steps
 posed there (which is why it is 32², not 64²), after a ~30 s cold start to fetch
 Pyodide + scipy + matplotlib. `interactive.py` guards its `micropip` call with
-`sys.platform == "emscripten"` so that it still runs natively. Its plot cell ends with
+`sys.platform == "emscripten"` so that it still runs natively. Its code is hidden (run mode without `--show-code`, which was tried on 2026-09-15 and found too busy; the essential snippet is quoted in the intro's fenced block instead, so keep it in step with the cell). Its plot cell ends with
 `fig`, the cell's *output*: marimo keeps a stale output faded while the cell re-runs,
 whereas console media (what `plt.show()` becomes there) is cleared first, so the
 figure would blink. Its sliders are `debounce=True` (re-run on release, not per pixel
