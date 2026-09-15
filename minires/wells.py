@@ -5,30 +5,6 @@ not the well.
 Wells (composing several completions, typically spanning multiple cells)
 are a setup and *reporting* (`Wells.rates_by_well`) concept only.
 
-.. note:: Spreading a well over its neighbouring cells was tried, then omitted.
-
-    Snapped to a cell centre, a well has its every effect a staircase function
-    of its coordinates -- constant within a cell -- which leaves an
-    optimisation over well *positions* with no gradient to work with until the
-    well crosses into the next cell (as in the EnOpt of
-    [HistoryMatching](https://github.com/patnr/HistoryMatching)). Distributing
-    it over the 4 surrounding cells by bilinear weights -- a *mollified* rather
-    than a rounded delta -- fixes that, and is not merely cosmetic: the
-    position dependence so obtained tracks that of a 3-times-refined grid to
-    within that grid's own discretization spread, i.e. some 5 times closer than
-    rounding manages. It does require the well index to be corrected for the
-    cells dividing the load, Peaceman's equivalent radius being derived for the
-    whole source in one cell: a well divided 4 ways under-reports its drawdown
-    by 23%, non-convergently, unless the weighted geometric mean of the
-    intercell distances is substituted for $r_e$ (which recovers 0.3%).
-
-    It was nonetheless judged not to earn its complexity -- a stencil threaded
-    through the well assembly, the well model and the plotting, for a
-    convenience of the optimiser rather than a fidelity of the simulator. The
-    work is preserved on the branch `well-spread` (`ResSim.spread_wells`,
-    `Grid2D.xy2stencil`, `wells._share_WI`, and `tests/test_spread.py`, which
-    pins each of the measurements quoted above).
-
 ## Theory
 
 A well is either an **injector** or a **producer**.
@@ -125,222 +101,6 @@ if TYPE_CHECKING:
     from minires import ResSim
 
 
-def peaceman_WI(model: "ResSim", xy: Any, rw: float, skin: float = 0.0) -> np.ndarray:
-    """Peaceman's well index for wells at `xy`, of radius `rw`, in `model`.
-
-    Applied for you to a well of `Wells.from_records` given an `rw`,
-    which is the convenient way to use it.
-
-    $$ WI = \\frac{2 π \\sqrt{k_x k_y}}{\\ln(r_e / r_w) + \\mathrm{skin}} $$
-
-    where the *equivalent radius*, $ r_e $, is the distance from the well at
-    which the (analytic, radial) pressure equals the (numerical) pressure of
-    the well's cell:
-    $$ r_e = 0.28 \\,
-       \\frac{\\sqrt{\\sqrt{k_y/k_x} \\, h_x^2
-                      + \\sqrt{k_x/k_y} \\, h_y^2}}
-              {(k_y/k_x)^{1/4} + (k_x/k_y)^{1/4}} \\,, $$
-    which reduces to the familiar $ r_e = 0.198 \\, h $ on an isotropic,
-    square grid. That constant is not a fudge factor: it is a property of
-    the 5-point stencil that `minires.ResSim.TPFA` assembles, and this model
-    reproduces it (`tests/test_wells.py` recovers $ r_e / h → 0.198 $ from the
-    simulated drawdown, and thereby the analytic, radial well pressure to
-    within 0.2%, on grids from 16² to 64²).
-
-    >>> from minires import ResSim
-    >>> model = ResSim(Lx=1, Ly=1, Nx=32, Ny=32)
-    >>> peaceman_WI(model, [[.5, .5]], rw=1e-3).round(4)
-    array([3.4476])
-
-    .. note:: `model` is used for its grid and its `K` alone.
-
-        Which is why this is a free function, not a method: the well index is a
-        property of a *location*, not of the well configuration, and it is
-        evaluated once, when asked for -- so a later edit of `K` does not
-        retroactively change a `Wells.WI` computed from it.
-
-    .. note:: $ WI \\, λ_t \\, Δp $ comes out as a rate *per unit thickness*.
-
-        Ref. `minires.ResSim.cdarcy`.
-
-    .. note:: `rw` must be given in the same length unit as `Lx`.
-    """
-    xy = np.asarray(xy, float).reshape((-1, 2))
-    ix, iy = model.xy2sub(*xy.T)
-    kx, ky = model.K[0][ix, iy], model.K[1][ix, iy]
-    # fmt: off
-    a, b = np.sqrt(ky/kx), np.sqrt(kx/ky)
-    r_e  = .28 * np.sqrt(a*model.hx**2 + b*model.hy**2) / (a**.5 + b**.5)
-    return model.cdarcy * 2*np.pi*np.sqrt(kx*ky) / (np.log(r_e/rw) + skin)
-    # fmt: on
-
-
-def well_path(model: "ResSim", vertices: Any, rw: float, skin: float = 0.0) -> tuple:
-    """Discretize a well *path* (a polyline): 1 weighted completion per cell.
-
-    Applied for you to a well of `Wells.from_records` given a `path`, which is
-    the convenient way to use it: the three returned arrays then need not be
-    assembled (with those of the other wells) by hand.
-
-    Returns `(xy, WI, alloc)`:
-
-    - `xy`: centres of the cells that the path traverses -- i.e. a value for
-      `Wells.xy`. Several completions act as a single well simply by
-      being several wells: `minires.ResSim.assemble_wells` superimposes them.
-    - `WI`: their well indices, i.e. a value for `Wells.WI`. Each is
-      `peaceman_WI` for its cell, scaled by the fraction of
-      that cell which the path actually traverses (so a cell merely clipped
-      by the path contributes proportionally less).
-    - `alloc`: `WI / WI.sum()`, for apportioning the rate among its completions:
-      `rates = rate * alloc[:, None]` (the rate signed as usual).
-      This is the standard (static) allocation -- proportional to the well index,
-      hence to both the contacted length and the local permeability.
-
-    >>> from minires import ResSim
-    >>> model = ResSim(Lx=1, Ly=1, Nx=10, Ny=10)
-    >>> xy, WI, alloc = well_path(model, [[.05, .05], [.45, .05]], rw=1e-2)
-    >>> xy.T[0]  # the traversed cells, in x
-    array([0.05, 0.15, 0.25, 0.35, 0.45])
-    >>> alloc  # the end cells, entered mid-way, get half the rate
-    array([0.125, 0.25 , 0.25 , 0.25 , 0.125])
-
-    .. note:: `alloc` is exact under BHP control, approximate under rate control.
-
-        Under BHP control (assuming 0 gravity and friction) the completions
-        simply share a `p_bh`. Under *rate* control, the allocation holds only
-        if the cell pressures are equal. Solving for it would make
-        $ p_\\mathrm{bh} $ an extra
-        unknown, i.e. a bordered linear system -- which the 5-diagonal
-        assembly of `minires.ResSim.TPFA` (Listing 1) is not set up for. Use
-        `minires.ResSim.well_controls` to reallocate per step, if it matters.
-
-    .. warning:: The completions are treated as independent *vertical* wells.
-
-        Which seems reasonable in a 2D areal model. Thus they count towards
-        `Wells.nComp`, not `Wells.nWell` -- ref `Wells.group`, which
-        `Wells.from_records` sets for you.
-    """
-    V = np.asarray(vertices, float).reshape((-1, 2))
-    assert len(V) >= 2, "A well path needs at least 2 vertices."
-    # Walk the polyline, accumulating traversed length per cell
-    lengths: dict = {}
-    for p0, p1 in zip(V[:-1], V[1:]):
-        d = p1 - p0
-        L = float(np.hypot(*d))
-        if L == 0:
-            continue
-        ts = model._crossings(p0, d)
-        mids = p0 + np.outer((ts[:-1] + ts[1:]) / 2, d)
-        for mid, dt in zip(mids, np.diff(ts)):
-            sub = tuple(int(i) for i in model.xy2sub(*mid))
-            lengths[sub] = lengths.get(sub, 0.0) + L * dt
-    # Discard the slivers left by corner crossings
-    total = sum(lengths.values())
-    lengths = {k: v for k, v in lengths.items() if v > 1e-9 * total}
-
-    subs = np.array(list(lengths))
-    xy = model.sub2xy(*subs.T).T
-    # Scale each WI by how much of its cell the path traverses, relative
-    # to the cell size -- so an axis-aligned full crossing scores exactly 1
-    # (and a diagonal one √2, it contacting that much more rock).
-    frac = np.array(list(lengths.values())) / np.sqrt(model.h2)
-    WI = frac * peaceman_WI(model, xy, rw, skin)
-    return xy, WI, WI / WI.sum()
-
-
-def aquifer_WI(model: "ResSim", xy: Any, faces: str = "WESN") -> np.ndarray:
-    """The "well index" of an aquifer contact: the transmissibility of the
-    boundary face(s) of each cell at `xy` -- from its centre out to the face.
-
-    An aquifer -- water-bearing rock beyond the reservoir's boundary, at a
-    pressure $ p_\\mathrm{aq} $ of its own -- feeds each reservoir cell that
-    touches it at the rate $ T \\, (p_\\mathrm{aq} - p) $, which is the law of a
-    BHP-controlled well, $ WI \\, λ_t \\, (p_\\mathrm{bh} - p) $. So an aquifer *is*
-    a BHP-controlled well, completed in every cell it touches, with
-    `bhp = p_aq` and this for `WI` -- and needs nothing else of the model:
-    the influx enters `minires.ResSim.assemble_wells` like any well's,
-    anchors the pressure (so that, if incompressible, a lone producer is fine:
-    the aquifer supplies it), is reported in `Wells.actual_rates`, and is
-    handled by the adjoint, `minires.tlm`, as any BHP well is. `Wells.from_records` applies it to a
-    well given `aquifer=True` (or `aquifer=faces`):
-
-    >>> from minires import ResSim
-    >>> model = ResSim(Lx=1, Ly=1, Nx=4, Ny=4, wells=[
-    ...     dict(name="Aq", xy=[[0, .3], [0, .5], [0, .7]], aquifer=True, bhp=2),
-    ...     dict(name="P1", xy=[1, 1], rate=-1),
-    ... ])
-    >>> model.wells.WI
-    array([ 2.,  2.,  2., nan])
-    >>> SS, PP = model.sim(.1, 3, np.zeros(model.Nxy), pbar=False)
-    >>> model.wells.rates_by_well.round(12)  # the aquifer supplies the producer
-    array([[ 1.,  1.,  1.],
-           [-1., -1., -1.]])
-
-    A cell's *boundary faces* are those across which the neighbour is inactive
-    (ref `minires.ResSim.active`) or outside the grid; it must have at
-    least one, and be active itself. Each contributes the half-cell
-    transmissibility, $ C \\, k \\, h_⊥ / (h_∥ / 2) $ (compare the whole-cell
-    one of `minires.ResSim.TPFA`), so that the aquifer pressure is
-    imposed *at the face* -- a Dirichlet condition, its flux discretized as
-    the interior ones are. A corner cell, with two boundary faces, gets both --
-    unless `faces` (a string of compass directions) leaves one out, as it must
-    when that edge is sealed, or on a 1D strip, whose every cell is a boundary
-    cell to the north and south. On a curved outline, keep them all.
-
-    **Aquifers** are beneficial in reservoirs as they act as pressure compensators.
-    Oil production ⇒ pressure decrease ⇒ aquifers expansion ⇒ pressure compensation.
-    Despite consisting of water, the expansion is generally significant
-    because the base volume is so big,
-    or the aquifer might even be connected to the ocean --
-    which is the *infinite* aquifer that a constant `bhp` here posits.
-    (The top of the water-bearing zone is the *water table*.)
-
-    .. note:: The mobility is the cell's total one, $ λ_t(S) $, as for any well.
-
-        Whereas a boundary face of the TPFA scheme would upwind it from the
-        aquifer side (water, $ S = 1 $). The difference is the injector's
-        well model, no more; the influx is water either way.
-        For an aquifer of a given *strength* -- a productivity index, $ J $,
-        as in the Fetkovich model -- give `WI` directly instead, or scale this.
-    """
-    xy = np.asarray(xy, float).reshape((-1, 2))
-    ix, iy = model.xy2sub(*xy.T)
-    # The number of boundary faces (among those selected) in each direction
-    n = boundary_faces(model, xy, faces).astype(int)  # NB: `bool + bool` is an `or`
-    nx, ny = n[:, :2].sum(1), n[:, 2:].sum(1)
-    assert (nx + ny > 0).all(), (
-        "An aquifer cell must lie on the boundary: have a face to an inactive"
-        " cell, or to outside the grid (ref `aquifer_WI`)."
-    )
-    kx, ky = model.K[0][ix, iy], model.K[1][ix, iy]
-    return model.cdarcy * 2 * (nx * kx * model.hy / model.hx + ny * ky * model.hx / model.hy)
-
-
-def boundary_faces(model: "ResSim", xy: Any, faces: str = "WESN") -> np.ndarray:
-    """Which faces of the cells at `xy` are *boundary* faces: to an inactive
-    cell (ref `minires.ResSim.active`), or to outside the grid.
-
-    Boolean, `(nCells, 4)`, the columns being the directions W, E, S, N --
-    of which `faces` (a string of them) selects the ones considered at all.
-    Serves `aquifer_WI`, and `minires.plotting.Plot2D.plt_faces`.
-
-    >>> from minires import ResSim
-    >>> model = ResSim(Lx=1, Ly=1, Nx=4, Ny=4)
-    >>> boundary_faces(model, [[0, 0], [0, .5], [.5, .5]]).astype(int)
-    array([[1, 0, 1, 0],
-           [1, 0, 0, 0],
-           [0, 0, 0, 0]])
-    """
-    xy = np.asarray(xy, float).reshape((-1, 2))
-    ix, iy = model.xy2sub(*xy.T)
-    act = np.pad(model.active, 1, constant_values=False)  # off-grid ⇒ inactive
-    assert act[ix + 1, iy + 1].all(), "The cells must be active (ref `active`)."
-    ix, iy = ix + 1, iy + 1  # (in the padded mask)
-    nbrs = [act[ix - 1, iy], act[ix + 1, iy], act[ix, iy - 1], act[ix, iy + 1]]
-    selected = np.array([d in faces for d in "WESN"])
-    return ~np.stack(nbrs, -1) & selected
-
-
 @dataclass
 class Wells(AlignedRepr):
     """The wells of a `minires.ResSim`: the flat, per-completion arrays.
@@ -376,8 +136,32 @@ class Wells(AlignedRepr):
 
     .. warning:: The wells get co-located with grid nodes, ref `xy2sub`.
 
-        This is a design choice, not a mathematical necessity.
-        An alternative would be to distribute them over nearby nodes.
+        This is a design choice, not a mathematical necessity. An alternative
+        would be to distribute them over nearby nodes -- ref the note below.
+
+    .. note:: Spreading a well over its neighbouring cells was tried, then omitted.
+
+        Snapped to a cell centre, a well has its every effect a staircase function
+        of its coordinates -- constant within a cell -- which leaves an
+        optimisation over well *positions* with no gradient to work with until the
+        well crosses into the next cell (as in the EnOpt of
+        [HistoryMatching](https://github.com/patnr/HistoryMatching)). Distributing
+        it over the 4 surrounding cells by bilinear weights -- a *mollified* rather
+        than a rounded delta -- fixes that, and is not merely cosmetic: the
+        position dependence so obtained tracks that of a 3-times-refined grid to
+        within that grid's own discretization spread, i.e. some 5 times closer than
+        rounding manages. It does require the well index to be corrected for the
+        cells dividing the load, Peaceman's equivalent radius being derived for the
+        whole source in one cell: a well divided 4 ways under-reports its drawdown
+        by 23%, non-convergently, unless the weighted geometric mean of the
+        intercell distances is substituted for $r_e$ (which recovers 0.3%).
+
+        It was nonetheless judged not to earn its complexity -- a stencil threaded
+        through the well assembly, the well model and the plotting, for a
+        convenience of the optimiser rather than a fidelity of the simulator. The
+        work is preserved on the branch `well-spread` (`ResSim.spread_wells`,
+        `Grid2D.xy2stencil`, `wells._share_WI`, and `tests/test_spread.py`, which
+        pins each of the measurements quoted above).
     """
     rates: Any = None
     """Array of shape `(nComp, nTime)` -- or `(nComp, 1)` if constant-in-time.
@@ -776,3 +560,219 @@ class Wells(AlignedRepr):
             group  = np.concatenate(group),
             names  = names,
         )  # fmt: off
+
+
+def peaceman_WI(model: "ResSim", xy: Any, rw: float, skin: float = 0.0) -> np.ndarray:
+    """Peaceman's well index for wells at `xy`, of radius `rw`, in `model`.
+
+    Applied for you to a well of `Wells.from_records` given an `rw`,
+    which is the convenient way to use it.
+
+    $$ WI = \\frac{2 π \\sqrt{k_x k_y}}{\\ln(r_e / r_w) + \\mathrm{skin}} $$
+
+    where the *equivalent radius*, $ r_e $, is the distance from the well at
+    which the (analytic, radial) pressure equals the (numerical) pressure of
+    the well's cell:
+    $$ r_e = 0.28 \\,
+       \\frac{\\sqrt{\\sqrt{k_y/k_x} \\, h_x^2
+                      + \\sqrt{k_x/k_y} \\, h_y^2}}
+              {(k_y/k_x)^{1/4} + (k_x/k_y)^{1/4}} \\,, $$
+    which reduces to the familiar $ r_e = 0.198 \\, h $ on an isotropic,
+    square grid. That constant is not a fudge factor: it is a property of
+    the 5-point stencil that `minires.ResSim.TPFA` assembles, and this model
+    reproduces it (`tests/test_wells.py` recovers $ r_e / h → 0.198 $ from the
+    simulated drawdown, and thereby the analytic, radial well pressure to
+    within 0.2%, on grids from 16² to 64²).
+
+    >>> from minires import ResSim
+    >>> model = ResSim(Lx=1, Ly=1, Nx=32, Ny=32)
+    >>> peaceman_WI(model, [[.5, .5]], rw=1e-3).round(4)
+    array([3.4476])
+
+    .. note:: `model` is used for its grid and its `K` alone.
+
+        Which is why this is a free function, not a method: the well index is a
+        property of a *location*, not of the well configuration, and it is
+        evaluated once, when asked for -- so a later edit of `K` does not
+        retroactively change a `Wells.WI` computed from it.
+
+    .. note:: $ WI \\, λ_t \\, Δp $ comes out as a rate *per unit thickness*.
+
+        Ref. `minires.ResSim.cdarcy`.
+
+    .. note:: `rw` must be given in the same length unit as `Lx`.
+    """
+    xy = np.asarray(xy, float).reshape((-1, 2))
+    ix, iy = model.xy2sub(*xy.T)
+    kx, ky = model.K[0][ix, iy], model.K[1][ix, iy]
+    # fmt: off
+    a, b = np.sqrt(ky/kx), np.sqrt(kx/ky)
+    r_e  = .28 * np.sqrt(a*model.hx**2 + b*model.hy**2) / (a**.5 + b**.5)
+    return model.cdarcy * 2*np.pi*np.sqrt(kx*ky) / (np.log(r_e/rw) + skin)
+    # fmt: on
+
+
+def well_path(model: "ResSim", vertices: Any, rw: float, skin: float = 0.0) -> tuple:
+    """Discretize a well *path* (a polyline): 1 weighted completion per cell.
+
+    Applied for you to a well of `Wells.from_records` given a `path`, which is
+    the convenient way to use it: the three returned arrays then need not be
+    assembled (with those of the other wells) by hand.
+
+    Returns `(xy, WI, alloc)`:
+
+    - `xy`: centres of the cells that the path traverses -- i.e. a value for
+      `Wells.xy`. Several completions act as a single well simply by
+      being several wells: `minires.ResSim.assemble_wells` superimposes them.
+    - `WI`: their well indices, i.e. a value for `Wells.WI`. Each is
+      `peaceman_WI` for its cell, scaled by the fraction of
+      that cell which the path actually traverses (so a cell merely clipped
+      by the path contributes proportionally less).
+    - `alloc`: `WI / WI.sum()`, for apportioning the rate among its completions:
+      `rates = rate * alloc[:, None]` (the rate signed as usual).
+      This is the standard (static) allocation -- proportional to the well index,
+      hence to both the contacted length and the local permeability.
+
+    >>> from minires import ResSim
+    >>> model = ResSim(Lx=1, Ly=1, Nx=10, Ny=10)
+    >>> xy, WI, alloc = well_path(model, [[.05, .05], [.45, .05]], rw=1e-2)
+    >>> xy.T[0]  # the traversed cells, in x
+    array([0.05, 0.15, 0.25, 0.35, 0.45])
+    >>> alloc  # the end cells, entered mid-way, get half the rate
+    array([0.125, 0.25 , 0.25 , 0.25 , 0.125])
+
+    .. note:: `alloc` is exact under BHP control, approximate under rate control.
+
+        Under BHP control (assuming 0 gravity and friction) the completions
+        simply share a `p_bh`. Under *rate* control, the allocation holds only
+        if the cell pressures are equal. Solving for it would make
+        $ p_\\mathrm{bh} $ an extra
+        unknown, i.e. a bordered linear system -- which the 5-diagonal
+        assembly of `minires.ResSim.TPFA` (Listing 1) is not set up for. Use
+        `minires.ResSim.well_controls` to reallocate per step, if it matters.
+
+    .. warning:: The completions are treated as independent *vertical* wells.
+
+        Which seems reasonable in a 2D areal model. Thus they count towards
+        `Wells.nComp`, not `Wells.nWell` -- ref `Wells.group`, which
+        `Wells.from_records` sets for you.
+    """
+    V = np.asarray(vertices, float).reshape((-1, 2))
+    assert len(V) >= 2, "A well path needs at least 2 vertices."
+    # Walk the polyline, accumulating traversed length per cell
+    lengths: dict = {}
+    for p0, p1 in zip(V[:-1], V[1:]):
+        d = p1 - p0
+        L = float(np.hypot(*d))
+        if L == 0:
+            continue
+        ts = model._crossings(p0, d)
+        mids = p0 + np.outer((ts[:-1] + ts[1:]) / 2, d)
+        for mid, dt in zip(mids, np.diff(ts)):
+            sub = tuple(int(i) for i in model.xy2sub(*mid))
+            lengths[sub] = lengths.get(sub, 0.0) + L * dt
+    # Discard the slivers left by corner crossings
+    total = sum(lengths.values())
+    lengths = {k: v for k, v in lengths.items() if v > 1e-9 * total}
+
+    subs = np.array(list(lengths))
+    xy = model.sub2xy(*subs.T).T
+    # Scale each WI by how much of its cell the path traverses, relative
+    # to the cell size -- so an axis-aligned full crossing scores exactly 1
+    # (and a diagonal one √2, it contacting that much more rock).
+    frac = np.array(list(lengths.values())) / np.sqrt(model.h2)
+    WI = frac * peaceman_WI(model, xy, rw, skin)
+    return xy, WI, WI / WI.sum()
+
+
+def aquifer_WI(model: "ResSim", xy: Any, faces: str = "WESN") -> np.ndarray:
+    """The "well index" of an aquifer contact: the transmissibility of the
+    boundary face(s) of each cell at `xy` -- from its centre out to the face.
+
+    An aquifer -- water-bearing rock beyond the reservoir's boundary, at a
+    pressure $ p_\\mathrm{aq} $ of its own -- feeds each reservoir cell that
+    touches it at the rate $ T \\, (p_\\mathrm{aq} - p) $, which is the law of a
+    BHP-controlled well, $ WI \\, λ_t \\, (p_\\mathrm{bh} - p) $. So an aquifer *is*
+    a BHP-controlled well, completed in every cell it touches, with
+    `bhp = p_aq` and this for `WI` -- and needs nothing else of the model:
+    the influx enters `minires.ResSim.assemble_wells` like any well's,
+    anchors the pressure (so that, if incompressible, a lone producer is fine:
+    the aquifer supplies it), is reported in `Wells.actual_rates`, and is
+    handled by the adjoint, `minires.tlm`, as any BHP well is. `Wells.from_records` applies it to a
+    well given `aquifer=True` (or `aquifer=faces`):
+
+    >>> from minires import ResSim
+    >>> model = ResSim(Lx=1, Ly=1, Nx=4, Ny=4, wells=[
+    ...     dict(name="Aq", xy=[[0, .3], [0, .5], [0, .7]], aquifer=True, bhp=2),
+    ...     dict(name="P1", xy=[1, 1], rate=-1),
+    ... ])
+    >>> model.wells.WI
+    array([ 2.,  2.,  2., nan])
+    >>> SS, PP = model.sim(.1, 3, np.zeros(model.Nxy), pbar=False)
+    >>> model.wells.rates_by_well.round(12)  # the aquifer supplies the producer
+    array([[ 1.,  1.,  1.],
+           [-1., -1., -1.]])
+
+    A cell's *boundary faces* are those across which the neighbour is inactive
+    (ref `minires.ResSim.active`) or outside the grid; it must have at
+    least one, and be active itself. Each contributes the half-cell
+    transmissibility, $ C \\, k \\, h_⊥ / (h_∥ / 2) $ (compare the whole-cell
+    one of `minires.ResSim.TPFA`), so that the aquifer pressure is
+    imposed *at the face* -- a Dirichlet condition, its flux discretized as
+    the interior ones are. A corner cell, with two boundary faces, gets both --
+    unless `faces` (a string of compass directions) leaves one out, as it must
+    when that edge is sealed, or on a 1D strip, whose every cell is a boundary
+    cell to the north and south. On a curved outline, keep them all.
+
+    **Aquifers** are beneficial in reservoirs as they act as pressure compensators.
+    Oil production ⇒ pressure decrease ⇒ aquifers expansion ⇒ pressure compensation.
+    Despite consisting of water, the expansion is generally significant
+    because the base volume is so big,
+    or the aquifer might even be connected to the ocean --
+    which is the *infinite* aquifer that a constant `bhp` here posits.
+    (The top of the water-bearing zone is the *water table*.)
+
+    .. note:: The mobility is the cell's total one, $ λ_t(S) $, as for any well.
+
+        Whereas a boundary face of the TPFA scheme would upwind it from the
+        aquifer side (water, $ S = 1 $). The difference is the injector's
+        well model, no more; the influx is water either way.
+        For an aquifer of a given *strength* -- a productivity index, $ J $,
+        as in the Fetkovich model -- give `WI` directly instead, or scale this.
+    """
+    xy = np.asarray(xy, float).reshape((-1, 2))
+    ix, iy = model.xy2sub(*xy.T)
+    # The number of boundary faces (among those selected) in each direction
+    n = boundary_faces(model, xy, faces).astype(int)  # NB: `bool + bool` is an `or`
+    nx, ny = n[:, :2].sum(1), n[:, 2:].sum(1)
+    assert (nx + ny > 0).all(), (
+        "An aquifer cell must lie on the boundary: have a face to an inactive"
+        " cell, or to outside the grid (ref `aquifer_WI`)."
+    )
+    kx, ky = model.K[0][ix, iy], model.K[1][ix, iy]
+    return model.cdarcy * 2 * (nx * kx * model.hy / model.hx + ny * ky * model.hx / model.hy)
+
+
+def boundary_faces(model: "ResSim", xy: Any, faces: str = "WESN") -> np.ndarray:
+    """Which faces of the cells at `xy` are *boundary* faces: to an inactive
+    cell (ref `minires.ResSim.active`), or to outside the grid.
+
+    Boolean, `(nCells, 4)`, the columns being the directions W, E, S, N --
+    of which `faces` (a string of them) selects the ones considered at all.
+    Serves `aquifer_WI`, and `minires.plotting.Plot2D.plt_faces`.
+
+    >>> from minires import ResSim
+    >>> model = ResSim(Lx=1, Ly=1, Nx=4, Ny=4)
+    >>> boundary_faces(model, [[0, 0], [0, .5], [.5, .5]]).astype(int)
+    array([[1, 0, 1, 0],
+           [1, 0, 0, 0],
+           [0, 0, 0, 0]])
+    """
+    xy = np.asarray(xy, float).reshape((-1, 2))
+    ix, iy = model.xy2sub(*xy.T)
+    act = np.pad(model.active, 1, constant_values=False)  # off-grid ⇒ inactive
+    assert act[ix + 1, iy + 1].all(), "The cells must be active (ref `active`)."
+    ix, iy = ix + 1, iy + 1  # (in the padded mask)
+    nbrs = [act[ix - 1, iy], act[ix + 1, iy], act[ix, iy - 1], act[ix, iy + 1]]
+    selected = np.array([d in faces for d in "WESN"])
+    return ~np.stack(nbrs, -1) & selected

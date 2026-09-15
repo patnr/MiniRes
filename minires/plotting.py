@@ -11,70 +11,6 @@ from matplotlib.ticker import MaxNLocator, MultipleLocator
 if TYPE_CHECKING:
     from minires import ResSim
 
-# NB: the two helpers below are all that is left of the `mpl-tools` dependency
-# (dropped so that the package need not concern itself with front-ends).
-# Its `freshfig` is not among them: `plt.subplots(num=..., clear=True)` is the
-# same thing, bar the screen placement, which belongs in a user's own tooling.
-
-# The axes properties that `plt_field` (and `styles`) let the caller set.
-_AXPROPS = ["title", "facecolor", "aspect"] + [
-    xyz + p for xyz in "xyz" for p in ["label", "ticks", "scale", "lim"]
-]
-
-
-def axprops(kwargs: dict) -> dict:
-    """Pop (and return) the `kwargs` that belong to `ax.set`, ref `_AXPROPS`."""
-    return {p: kwargs.pop(p) for p in _AXPROPS if p in kwargs}
-
-
-def is_inline() -> bool:
-    """Whether the active `mpl` backend is an IPython/Jupyter `inline` one.
-
-    NB: not the negation of "interactive" -- `Agg`, `PDF`, ... are neither.
-    """
-    return "inline" in mpl.get_backend()
-
-
-coord_type = "absolute"
-"""Define scaling of `Plot2D.plt_field` axes.
-- "relative": `(0, 1)  x (0, 1)`
-- "absolute": `(0, Lx) x (0, Ly)`
-- "index"   : `(0, Ny) x (0, Ny)`
-"""
-
-# Colormap for saturation
-# cm_ow = "managua"
-lin_cm = mpl.colors.LinearSegmentedColormap.from_list
-cm_ow = lin_cm("", [(0, "#1d9e97"), (0.3, "#b2e0dc"), (1, "#f48974")])
-# cOil, cWater = "red", "blue"        # Plain
-# cOil, cWater = "#d8345f", "#01a9b4" # Pastel/neon
-# cOil, cWater = "#e58a8a", "#086972" # Pastel
-# ccnvrt = lambda c: np.array(mpl.colors.colorConverter.to_rgb(c))
-# cMiddle = .3*ccnvrt(cWater) + .7*ccnvrt(cOil)
-# cm_ow = lin_cm("", [cWater, cMiddle, cOil])
-
-styles: dict = dict(
-    default=dict(
-        title="",
-        transf=lambda x: x,
-        cmap="viridis",
-        levels=10,
-        cticks=None,
-        # Note that providing vmin/vmax (and not a levels list) to mpl
-        # yields prettier colobar ticks, but destorys the consistency
-        # of the colorbars from one figure to another.
-        locator=None,
-    ),
-    oil=dict(
-        title="Oil saturation",
-        transf=lambda x: 1 - x,
-        cmap=cm_ow,
-        levels=np.linspace(0 - 1e-7, 1 + 1e-7, 20),
-        cticks=np.linspace(0, 1, 6),
-    ),
-)
-"""Default `Plot2D.plt_field` plot styling values."""
-
 
 class Plot2D:
     """Plots specialized for 2D fields.
@@ -520,31 +456,6 @@ class Plot2D:
             return ani
 
 
-def tight_show(figure: Any, enabled: bool) -> None:
-    if enabled:
-        figure.tight_layout()
-        plt.show()
-
-
-def _get_ipython() -> Any:
-    """Return the active IPython shell, or `None` (also if IPython isn't installed)."""
-    try:
-        from IPython import get_ipython
-    except ImportError:
-        return None
-    return get_ipython()
-
-
-def _ipython_will_prompt(ip: Any) -> bool:
-    """Whether IPython returns to its (event-loop running) prompt after this script.
-
-    False for `ipython script.py` (no `-i`), which exits immediately.
-    """
-    if ip is None:
-        return False
-    return bool(getattr(ip.parent, "interact", True))
-
-
 def show(block: Optional[bool] = None) -> None:
     """Display the figures, whether run as script, in IPython, or in a notebook.
 
@@ -571,3 +482,101 @@ def show(block: Optional[bool] = None) -> None:
         block = not is_inline() and not _ipython_will_prompt(ip)
 
     plt.show(block=block)
+
+
+# ╔══════════╗
+# ║ Settings ║
+# ╚══════════╝
+
+coord_type = "absolute"
+"""Define scaling of `Plot2D.plt_field` axes.
+- "relative": `(0, 1)  x (0, 1)`
+- "absolute": `(0, Lx) x (0, Ly)`
+- "index"   : `(0, Ny) x (0, Ny)`
+"""
+
+# Colormap for saturation
+# cm_ow = "managua"
+lin_cm = mpl.colors.LinearSegmentedColormap.from_list
+cm_ow = lin_cm("", [(0, "#1d9e97"), (0.3, "#b2e0dc"), (1, "#f48974")])
+# cOil, cWater = "red", "blue"        # Plain
+# cOil, cWater = "#d8345f", "#01a9b4" # Pastel/neon
+# cOil, cWater = "#e58a8a", "#086972" # Pastel
+# ccnvrt = lambda c: np.array(mpl.colors.colorConverter.to_rgb(c))
+# cMiddle = .3*ccnvrt(cWater) + .7*ccnvrt(cOil)
+# cm_ow = lin_cm("", [cWater, cMiddle, cOil])
+
+styles: dict = dict(
+    default=dict(
+        title="",
+        transf=lambda x: x,
+        cmap="viridis",
+        levels=10,
+        cticks=None,
+        # Note that providing vmin/vmax (and not a levels list) to mpl
+        # yields prettier colobar ticks, but destorys the consistency
+        # of the colorbars from one figure to another.
+        locator=None,
+    ),
+    oil=dict(
+        title="Oil saturation",
+        transf=lambda x: 1 - x,
+        cmap=cm_ow,
+        levels=np.linspace(0 - 1e-7, 1 + 1e-7, 20),
+        cticks=np.linspace(0, 1, 6),
+    ),
+)
+"""Default `Plot2D.plt_field` plot styling values."""
+
+
+# ╔═══════════════════╗
+# ║ Front-end helpers ║
+# ╚═══════════════════╝
+
+# NB: the two helpers below are all that is left of the `mpl-tools` dependency
+# (dropped so that the package need not concern itself with front-ends).
+# Its `freshfig` is not among them: `plt.subplots(num=..., clear=True)` is the
+# same thing, bar the screen placement, which belongs in a user's own tooling.
+
+# The axes properties that `plt_field` (and `styles`) let the caller set.
+_AXPROPS = ["title", "facecolor", "aspect"] + [
+    xyz + p for xyz in "xyz" for p in ["label", "ticks", "scale", "lim"]
+]
+
+
+def axprops(kwargs: dict) -> dict:
+    """Pop (and return) the `kwargs` that belong to `ax.set`, ref `_AXPROPS`."""
+    return {p: kwargs.pop(p) for p in _AXPROPS if p in kwargs}
+
+
+def is_inline() -> bool:
+    """Whether the active `mpl` backend is an IPython/Jupyter `inline` one.
+
+    NB: not the negation of "interactive" -- `Agg`, `PDF`, ... are neither.
+    """
+    return "inline" in mpl.get_backend()
+
+
+def tight_show(figure: Any, enabled: bool) -> None:
+    if enabled:
+        figure.tight_layout()
+        plt.show()
+
+
+def _get_ipython() -> Any:
+    """Return the active IPython shell, or `None` (also if IPython isn't installed)."""
+    try:
+        from IPython import get_ipython
+    except ImportError:
+        return None
+    return get_ipython()
+
+
+def _ipython_will_prompt(ip: Any) -> bool:
+    """Whether IPython returns to its (event-loop running) prompt after this script.
+
+    False for `ipython script.py` (no `-i`), which exits immediately.
+    """
+    if ip is None:
+        return False
+    return bool(getattr(ip.parent, "interact", True))

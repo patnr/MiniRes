@@ -9,4 +9,4 @@ from minires.wells import Wells, aquifer_WI, peaceman_WI, well_path
 # README), and the listed submodules on their own pages. `core` is deliberately absent,
 # lest `ResSim` be documented twice; so are the other re-exports, which are documented
 # in their home modules.
-__all__ = ["ResSim", "grid", "wells", "fluids", "plotting", "tlm"]
+__all__ = ["ResSim", "grid", "fluids", "wells", "plotting", "tlm"]

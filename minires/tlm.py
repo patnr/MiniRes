@@ -207,6 +207,42 @@ class Gradient(NamedTuple):
     axis `1` if the control is constant in time."""
 
 
+def adjoint(
+    model: ResSim,
+    dt: float,
+    SS: np.ndarray,
+    PP: np.ndarray,
+    dJ_dSS: np.ndarray,
+    dJ_dPP: np.ndarray | None = None,
+) -> Gradient:
+    """The gradient of $ J(S, P) $ wrt. `S0`, `P0`, $ \\log K $ and the BHP controls, by the adjoint sweep.
+
+    Seeded by the partials of the objective wrt. the *stored* trajectory,
+    `dJ_dSS[k]` $ = ∂J/∂S_k $, `dJ_dPP[k]` $ = ∂J/∂P_k $ (shaped like `SS`,
+    `PP`; the latter defaults to `0`), ref the module docstring. Sweeps
+    backwards from the final time, re-linearizing each step (`linearize`) on
+    the way, so the trajectory `(SS, PP)` of `sim(dt, ...)` is all it needs.
+
+    The cost is about that of a `sim` (one forward step and one factorization
+    per step, ref `linearize`), independently of the number of parameters --
+    which is the point of an adjoint.
+    """
+    nSteps = len(SS) - 1
+    aS = np.array(dJ_dSS[-1], float)
+    aP = np.zeros(model.Nxy) if dJ_dPP is None else np.array(dJ_dPP[-1], float)
+    alogK = np.zeros(model.K.shape)
+    abhp = np.zeros((model.nComp, nSteps))
+    for k in reversed(range(nSteps)):
+        tape = linearize(model, dt, SS[k], PP[k], k)
+        aS, aP, aK, abhp[:, k] = adj_step(tape, aS, aP)
+        alogK += aK
+        aS += dJ_dSS[k]
+        if dJ_dPP is not None:
+            aP += dJ_dPP[k]
+    return Gradient(aS, aP, alogK, abhp)
+
+
+
 def face_operators(model: ResSim) -> tuple:
     """The interior faces of the grid, and the sparse operators on them.
 
@@ -515,38 +551,3 @@ def adj_step(
     aS    = aS + t.dMt_dS * adMt                            # dMt = dMt_dS * dS
     # fmt: on
     return aS, aP, alogK.reshape(t.model.K.shape), abhp
-
-
-def adjoint(
-    model: ResSim,
-    dt: float,
-    SS: np.ndarray,
-    PP: np.ndarray,
-    dJ_dSS: np.ndarray,
-    dJ_dPP: np.ndarray | None = None,
-) -> Gradient:
-    """The gradient of $ J(S, P) $ wrt. `S0`, `P0`, $ \\log K $ and the BHP controls, by the adjoint sweep.
-
-    Seeded by the partials of the objective wrt. the *stored* trajectory,
-    `dJ_dSS[k]` $ = ∂J/∂S_k $, `dJ_dPP[k]` $ = ∂J/∂P_k $ (shaped like `SS`,
-    `PP`; the latter defaults to `0`), ref the module docstring. Sweeps
-    backwards from the final time, re-linearizing each step (`linearize`) on
-    the way, so the trajectory `(SS, PP)` of `sim(dt, ...)` is all it needs.
-
-    The cost is about that of a `sim` (one forward step and one factorization
-    per step, ref `linearize`), independently of the number of parameters --
-    which is the point of an adjoint.
-    """
-    nSteps = len(SS) - 1
-    aS = np.array(dJ_dSS[-1], float)
-    aP = np.zeros(model.Nxy) if dJ_dPP is None else np.array(dJ_dPP[-1], float)
-    alogK = np.zeros(model.K.shape)
-    abhp = np.zeros((model.nComp, nSteps))
-    for k in reversed(range(nSteps)):
-        tape = linearize(model, dt, SS[k], PP[k], k)
-        aS, aP, aK, abhp[:, k] = adj_step(tape, aS, aP)
-        alogK += aK
-        aS += dJ_dSS[k]
-        if dJ_dPP is not None:
-            aP += dJ_dPP[k]
-    return Gradient(aS, aP, alogK, abhp)

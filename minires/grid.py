@@ -23,19 +23,6 @@ import numpy as np
 import numpy.typing as npt
 
 
-class Fluxes(NamedTuple):
-    """Data container with dot (attr) access for cell face fluxes. Mimicks matlab code.
-
-    Positive is in the direction of increasing index. The fluxes through the
-    *boundary* faces are `0`: the reservoir is closed (no-flow) all around.
-    """
-
-    x: np.ndarray
-    """Fluxes through the x-normal faces. Shape `(Nx+1, Ny)`."""
-    y: np.ndarray
-    """Fluxes through the y-normal faces. Shape `(Nx, Ny+1)`."""
-
-
 @dataclass
 class Grid2D:
     """Defines a 2D rectangular grid.
@@ -184,3 +171,16 @@ class Grid2D:
                 for i in range(int(np.floor(lo / h)) + 1, int(np.ceil(hi / h)))
             ]
         return np.unique(np.clip(ts, 0, 1))  # NB: `unique` also sorts
+
+
+class Fluxes(NamedTuple):
+    """Data container with dot (attr) access for cell face fluxes. Mimicks matlab code.
+
+    Positive is in the direction of increasing index. The fluxes through the
+    *boundary* faces are `0`: the reservoir is closed (no-flow) all around.
+    """
+
+    x: np.ndarray
+    """Fluxes through the x-normal faces. Shape `(Nx+1, Ny)`."""
+    y: np.ndarray
+    """Fluxes through the y-normal faces. Shape `(Nx, Ny+1)`."""
