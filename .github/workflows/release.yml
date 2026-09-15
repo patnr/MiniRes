@@ -1,0 +1,81 @@
+name: release
+
+# A pushed tag `vX.Y.Z` is a release: build the distributions, publish them to
+# PyPI, and create the GitHub Release with that version's CHANGELOG section as
+# its notes. The tag is annotated by hand (ref CLAUDE.md, "Release state"),
+# after the commit that bumps `pyproject.toml` and dates the CHANGELOG section.
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      # NB: pinned exactly, as in tests.yml.
+      - uses: astral-sh/setup-uv@v10.0.1
+
+      - name: Check that the tag matches the package version
+        run: |
+          v="v$(uv version --short)"
+          test "$v" = "$GITHUB_REF_NAME" || {
+            echo "::error::tag $GITHUB_REF_NAME, but pyproject.toml says $v"; exit 1; }
+
+      - name: Check that the CHANGELOG has a dated section for it
+        run: |
+          grep -q "^## \[${GITHUB_REF_NAME#v}\] -- [0-9]\{4\}-[0-9][0-9]-[0-9][0-9]" CHANGELOG.md || {
+            echo "::error::no dated section '## [${GITHUB_REF_NAME#v}] -- YYYY-MM-DD' in CHANGELOG.md"; exit 1; }
+
+      - run: uv build
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: dist
+          path: dist/
+
+  # Trusted publishing: PyPI is told to accept this repo's `release.yml`, run in
+  # the `pypi` environment, so no token is stored here. Configured on PyPI under
+  # the project's "Publishing" (as a *pending* publisher before the first upload).
+  pypi:
+    needs: build
+    runs-on: ubuntu-latest
+    environment: pypi
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/download-artifact@v8
+        with:
+          name: dist
+          path: dist/
+      - uses: pypa/gh-action-pypi-publish@release/v1
+
+  # Independent of the PyPI upload, so the release notes appear even if that
+  # step is not (yet) configured.
+  github-release:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/download-artifact@v8
+        with:
+          name: dist
+          path: dist/
+
+      - name: Extract this version's CHANGELOG section
+        run: |
+          awk -v v="${GITHUB_REF_NAME#v}" \
+            '$0 ~ "^## \\[" v "\\]" {p=1; next} /^## / {p=0} p' CHANGELOG.md > notes.md
+          test -s notes.md
+
+      - name: Create the GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" dist/* \
+            --verify-tag --title "$GITHUB_REF_NAME" --notes-file notes.md

@@ -8,6 +8,13 @@ Such changes are marked **BREAKING** below.
 The package is not on PyPI; it is consumed straight from git, so downstream users
 should pin a tag (or commit hash) and advance it deliberately.
 
+**Releasing**: one tag per section below, and vice versa. The release commit bumps
+the version in `pyproject.toml` and dates the section; it then gets an annotated
+tag `vX.Y.Z` whose message is the section's one-line summary. Pushing the tag runs
+`.github/workflows/release.yml`, which builds the distributions, publishes them to
+PyPI and creates the GitHub Release with the section as its notes. Only releases
+are tagged (no pre-release tags): an unreleased snapshot is pinned by commit hash.
+
 ## [Unreleased]
 
 Renamed to **MiniRes**; wells rebuilt (records, paths, BHP control, grouping, a
@@ -271,6 +278,7 @@ randomness differences), as verified by `examples/quarter_five_spot.py`.
   strictly incompressible.
 - `dac8634`: Type hints, checkable with `ty`.
 
+[Unreleased]: https://github.com/patnr/MiniRes/compare/v0.2.0...HEAD
 [0.2.0]: https://github.com/patnr/MiniRes/compare/v0.1.1...v0.2.0
 [0.1.1]: https://github.com/patnr/MiniRes/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/patnr/MiniRes/releases/tag/v0.1.0
