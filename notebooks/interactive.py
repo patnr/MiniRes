@@ -51,9 +51,10 @@ async def _():
     import numpy as np
     from matplotlib.ticker import MaxNLocator
 
+    import minires
     from minires import ResSim
 
-    return MaxNLocator, ResSim, mo, np, plt
+    return MaxNLocator, ResSim, minires, mo, np, plt
 
 
 @app.cell(hide_code=True)
@@ -91,9 +92,7 @@ def _(MaxNLocator, P, S, k, model, plt):
 
 
 @app.cell(hide_code=True)
-def _(ResSim, mo):  # `ResSim`: run after the install, so as to report its version
-    from importlib.metadata import version
-
+def _(minires, mo):
     mo.md(
         rf"""
         At $\mu_o/\mu_w = 1$ the front is the symmetric arc that gives the
@@ -104,7 +103,7 @@ def _(ResSim, mo):  # `ResSim`: run after the install, so as to report its versi
         [Docs](https://patnr.github.io/MiniRes/minires.html)
         &middot; [More examples](https://patnr.github.io/MiniRes/examples.html)
         &middot; [GitHub](https://github.com/patnr/MiniRes)
-        &middot; minires {version("minires")}
+        &middot; minires {minires.__version__}
         """
     )
     return
