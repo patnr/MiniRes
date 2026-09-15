@@ -49,9 +49,11 @@ async def _():
 @app.cell(hide_code=True)
 def _(mo):
     nSteps = 28
-    M = mo.ui.slider(1, 10, value=1, show_value=True,
+    # `debounce`: re-run on release, not on every pixel of a drag.
+    M = mo.ui.slider(1, 10, value=1, show_value=True, debounce=True,
                      label=r"Viscosity ratio, $\mu_o/\mu_w$")
-    k = mo.ui.slider(0, nSteps, value=nSteps, show_value=True, label="Time step")
+    k = mo.ui.slider(0, nSteps, value=nSteps, show_value=True, debounce=True,
+                     label="Time step")
     mo.vstack([M, k])
     return M, k, nSteps
 
@@ -70,10 +72,12 @@ def _(ResSim, M, np, nSteps):
 
 
 @app.cell
-def _(P, S, k, model, plt):
-    _fig, (ax1, ax2) = plt.subplots(ncols=2, figsize=(10, 4.2))
-    model.plt_field(ax1, S[k.value], "oil", finalize=False)
-    model.plt_field(ax2, P[k.value], title="Pressure");  # shown by its `plt.show()`
+def _(P, S, k, model, np, plt):
+    fig, (ax1, ax2) = plt.subplots(ncols=2, figsize=(10, 4.2))
+    model.plt_field(ax1, S[k.value], "oil")
+    model.plt_field(ax2, P[k.value], title="Pressure",
+                    levels=np.linspace(P.min(), P.max(), 11))  # fixed over time
+    fig
     return
 
 

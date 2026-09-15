@@ -114,10 +114,6 @@ ignore = [
     "E731", # don't assign lambda
 ]
 
-[tool.ruff.lint.per-file-ignores]
-# A trailing `;` is how a marimo cell suppresses its output.
-"notebooks/interactive.py" = ["E703"]
-
 
 # ╔═════════╗
 # ║ Testing ║

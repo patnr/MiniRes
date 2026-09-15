@@ -131,7 +131,10 @@ build, not pytest. Both are linked from the root README's "Python" bullet and fr
   published and **never committed**.
 
 Both notebooks install `minires` **from PyPI** (`micropip` cannot do `git+`), so
-they work from 0.3.0 on. Verified in a real browser (2026-09-11):
+they work from 0.3.0 on -- and run against the **latest release, not the repo**: a
+notebook change that needs a library change (as `model.anim(S)` and the marimo
+`plt.show()` skip did, 2026-09-15) must be pushed together with the release that
+carries it, or the public demos break in between. Verified in a real browser (2026-09-11):
 the whole stack runs in Pyodide -- scipy's SuperLU (`splu`/`spilu`/`cg`), matplotlib,
 `mpl-tools` (since replaced by `struct-tools`, likewise pure-Python, but not itself
 re-verified in a browser) -- at some 2-5x native, i.e. ~0.4 s per slider move for the 32² x 28 steps
