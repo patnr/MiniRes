@@ -18,6 +18,11 @@ are tagged (no pre-release tags): an unreleased snapshot is pinned by commit has
 
 ## [Unreleased]
 
+### Added
+
+- `minires.__version__`, read from the installed distribution's metadata (so
+  `version` in `pyproject.toml` stays the single source).
+
 ## [0.3.1] -- 2026-09-15
 
 `anim` needs only the trajectory, and displays itself; no `plt.show()` under marimo.
