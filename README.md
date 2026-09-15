@@ -41,3 +41,11 @@ uv sync  # or: pip install -e .
 uv run pytest
 uv run ruff check
 ```
+
+### AI
+
+AI (in particular Claude Code) has already played a major role in developing
+the recent features here, so AI-generated contributions are welcome.
+But there is a strong focus on minimising *slop*, meaning that the changes should be
+as small as the job allows, and written in the style of what surrounds them.
+`CLAUDE.md` carries conventions and a good deal of what has already been tried and rejected.
