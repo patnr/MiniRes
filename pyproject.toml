@@ -1,6 +1,6 @@
 [project]
 name = "minires"
-version = "0.3.0"
+version = "0.3.1"
 description = "Toy petroleum reservoir simulator using TPFA."
 authors = [{name = "patnr", email = "patrick.n.raanes@gmail.com"}]
 license = "MIT"
