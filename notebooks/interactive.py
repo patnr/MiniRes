@@ -1,7 +1,9 @@
 """MiniRes in the browser, with sliders: a [marimo](https://marimo.io) notebook.
 
 Exported to WebAssembly (Pyodide) by `.github/workflows/docs.yml`, and published at
-<https://patnr.github.io/MiniRes/wasm/>. Also runs natively: `uv run marimo edit
+<https://patnr.github.io/MiniRes/wasm/>, in run mode with the code shown
+(`--show-code`): the cells that use MiniRes are visible, the plumbing (the
+`micropip` install, the sliders' layout) and the prose are `hide_code=True`. Also runs natively: `uv run marimo edit
 notebooks/interactive.py`.
 """
 
@@ -25,16 +27,11 @@ def _(mo):
     return
 
 
-@app.cell
-def _():
-    import marimo as mo
-
-    return (mo,)
-
-
-@app.cell
+@app.cell(hide_code=True)
 async def _():
     import sys
+
+    import marimo as mo
 
     if sys.platform == "emscripten":  # i.e. WebAssembly, in the browser
         import micropip
@@ -46,7 +43,7 @@ async def _():
 
     from minires import ResSim
 
-    return ResSim, np, plt
+    return ResSim, mo, np, plt
 
 
 @app.cell(hide_code=True)
@@ -62,7 +59,7 @@ def _(mo):
 @app.cell
 def _(ResSim, M, np, nSteps):
     # A quarter five-spot: water injected in one corner, oil produced in the other.
-    # Rates are signed -- positive injects, negative produces.
+    # Rates are signed -- positive injects, negative produces. (`from minires import ResSim`)
     model = ResSim(Lx=1, Ly=1, Nx=32, Ny=32,
                    fluid=dict(vo=M.value),
                    wells=[dict(name="Inj",  xy=[0, 0], rate=+1),
