@@ -30,31 +30,9 @@ and I will add it to this list.
 
 - [History matching tutorial](https://github.com/patnr/HistoryMatching)
 
-## Installation
-
-Requires Python `>=3.12`.
-
-```sh
-pip install minires
-```
-
-or, with [uv](https://docs.astral.sh/uv/),
-
-```sh
-uv add minires
-```
-
-Since `0.x` minor bumps may break the API (ref `CHANGELOG.md`),
-pin the minor version (`minires~=0.3.0`) and advance it deliberately.
-An unreleased snapshot is installed from git, pinned by commit hash:
-
-```sh
-pip install "minires @ git+https://github.com/patnr/MiniRes.git@<hash>"
-```
-
 ## Contributions
 
-To also get the examples and tests, clone instead, and install in editable mode:
+To also get the examples and tests, clone instead, and install with [uv](https://docs.astral.sh/uv/), in editable mode:
 
 ```sh
 git clone https://github.com/patnr/MiniRes.git
