@@ -5,8 +5,9 @@ The format loosely follows [Keep a Changelog](https://keepachangelog.com/en/1.1.
 Versioning is semantic, but `0.x`, meaning that **minor bumps may break the API**.
 Such changes are marked **BREAKING** below.
 
-The package is not on PyPI; it is consumed straight from git, so downstream users
-should pin a tag (or commit hash) and advance it deliberately.
+The package is on PyPI as `minires`. Since `0.x` minor bumps may break the API,
+pin the minor version (`minires~=0.3.0`) and advance it deliberately; a git commit
+hash pins an unreleased snapshot.
 
 **Releasing**: one tag per section below, and vice versa. The release commit bumps
 the version in `pyproject.toml` and dates the section; it then gets an annotated
@@ -17,9 +18,11 @@ are tagged (no pre-release tags): an unreleased snapshot is pinned by commit has
 
 ## [Unreleased]
 
-Renamed to **MiniRes**; wells rebuilt (records, paths, BHP control, grouping, a
+## [0.3.0] -- 2026-09-15
+
+Renamed to **MiniRes**, and released on PyPI; wells rebuilt (records, paths, BHP control, grouping, a
 Peaceman well index); an adjoint model; aquifers; inactive cells; Corey
-relative permeabilities; practical units.
+relative permeabilities; practical units; Gaussian random fields (`geostat`).
 
 ### Added
 
@@ -287,7 +290,8 @@ randomness differences), as verified by `examples/quarter_five_spot.py`.
   strictly incompressible.
 - `dac8634`: Type hints, checkable with `ty`.
 
-[Unreleased]: https://github.com/patnr/MiniRes/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/patnr/MiniRes/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/patnr/MiniRes/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/patnr/MiniRes/compare/v0.1.1...v0.2.0
 [0.1.1]: https://github.com/patnr/MiniRes/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/patnr/MiniRes/releases/tag/v0.1.0
