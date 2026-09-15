@@ -82,9 +82,11 @@ def _(P, S, k, model, np, plt):
 
 
 @app.cell(hide_code=True)
-def _(mo):
+def _(ResSim, mo):  # `ResSim`: run after the install, so as to report its version
+    from importlib.metadata import version
+
     mo.md(
-        r"""
+        rf"""
         At $\mu_o/\mu_w = 1$ the front is the symmetric arc that gives the
         quarter five-spot its name. Raising the ratio makes the water the more
         mobile phase: it channels along the diagonal and breaks through early,
@@ -93,6 +95,7 @@ def _(mo):
         [Docs](https://patnr.github.io/MiniRes/minires.html)
         &middot; [More examples](https://patnr.github.io/MiniRes/examples.html)
         &middot; [GitHub](https://github.com/patnr/MiniRes)
+        &middot; minires {version("minires")}
         """
     )
     return
