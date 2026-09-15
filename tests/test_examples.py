@@ -74,7 +74,12 @@ def test_example(path):
             + as_source(path.stem, values))
     assert set(values) == set(expected), "Keys of `__digest__` changed." + hint
     for k, v in values.items():
-        assert np.isclose(v, expected[k], rtol=1e-4).all(), (
+        # Relative to the array's scale, not elementwise: an entry near zero
+        # (e.g. a Gaussian field sampled through a near-singular Cholesky
+        # factor) carries platform round-off that an elementwise rtol
+        # magnifies into a failure (ref `random_fields` on ubuntu/3.13).
+        e = np.asarray(expected[k], dtype=float)
+        assert np.isclose(v, e, rtol=1e-4, atol=1e-4 * np.abs(e).max()).all(), (
             f"Example '{path.stem}' produced other values for '{k}':"
             f"\n  now: {v}\n  ref: {np.asarray(expected[k])}" + hint)
 

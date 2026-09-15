@@ -87,7 +87,11 @@ to them as modules (`` `examples.buildup` ``), which pdoc links. Its module-leve
 and the figures are what an example's page shows: its members (`model`, `dt`, ...) are not. `tests/test_examples.py` runs them all with `runpy`
 (so `show()` is skipped, but the plotting *is* exercised) and compares a fingerprint of
 `__digest__` with `tests/references.py` (regenerate that table with
-`uv run python tests/test_examples.py`, but only if the change is intended).
+`uv run python tests/test_examples.py`, but only if the change is intended). The
+comparison is `rtol=1e-4` **plus** `atol=1e-4` times the array's largest magnitude:
+elementwise, an entry near zero fails on platform round-off (ubuntu/3.13 put a
+`random_fields` entry of 0.06 off by 1.02e-4 relative, the field being drawn through a
+near-singular Cholesky factor), so do not tighten it back to a bare `rtol`.
 `examples/buildup.py` is the one posed in **metric** units (the rest leave their units unnamed),
 and reads its permeability back off the semilog derivative, as a well test does.
 `examples/water_cut_gradient.py` and `examples/history_match_gradient.py` are the adjoint's

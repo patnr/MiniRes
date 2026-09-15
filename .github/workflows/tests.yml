@@ -19,7 +19,7 @@ jobs:
   test:
     needs: linting
     strategy:
-      fail-fast: true
+      fail-fast: false  # so every OS/Python cell reports, not just the first to fail
       matrix:
         os: [ "ubuntu-latest", "macos-latest" ]
         python-version: [ "3.12", "3.13", "3.14" ]
