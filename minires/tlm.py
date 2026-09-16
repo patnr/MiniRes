@@ -289,7 +289,7 @@ def face_operators(model: ResSim) -> tuple:
     return lo, hi, Grad, Sum, g
 
 
-@dataclass
+@dataclass(repr=False)
 class Tape(AlignedRepr):
     """The linearization of one step of `minires.ResSim.time_stepper`.
 
@@ -298,8 +298,6 @@ class Tape(AlignedRepr):
     and vectors -- of the linear statements of the step's tangent, evaluated
     at that state.
     """
-
-    __repr__ = AlignedRepr.__repr__
 
     model: ResSim
     """The model whose step this linearizes (for `fluid`, `ct`, ...)."""

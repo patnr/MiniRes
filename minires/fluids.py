@@ -79,7 +79,7 @@ import numpy as np
 from struct_tools import AlignedRepr
 
 
-@dataclass
+@dataclass(repr=False)
 class Fluid(AlignedRepr):
     """A two-phase (water/oil) fluid: viscosities and Corey relative permeabilities.
 
@@ -99,8 +99,6 @@ class Fluid(AlignedRepr):
     >>> Mw.round(4), Mo.round(4)
     (array([0.  , 0.  , 0.25, 1.  , 1.  ]), array([0.5  , 0.5  , 0.125, 0.   , 0.   ]))
     """
-
-    __repr__ = AlignedRepr.__repr__
 
     vw: float = 1.0
     """Viscosity for water."""

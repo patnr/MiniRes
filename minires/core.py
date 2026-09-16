@@ -16,7 +16,7 @@ from minires.fluids import Fluid
 from minires.wells import Wells
 
 
-@dataclass
+@dataclass(repr=False)
 class ResSim(AlignedRepr, Grid2D, Plot2D):
     """Reservoir simulator class.
 
@@ -38,9 +38,6 @@ class ResSim(AlignedRepr, Grid2D, Plot2D):
     >>> S[-1, [100, 1300, 2900]]
     array([0.9429345 , 0.91358172, 0.71554613])
     """
-
-    # Dont use dataclass repr
-    __repr__ = AlignedRepr.__repr__
 
     # Prefer __setattr__ approach (over @property get/set-ers)
     # because @property requires the _private pattern,

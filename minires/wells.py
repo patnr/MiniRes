@@ -101,7 +101,7 @@ if TYPE_CHECKING:
     from minires import ResSim
 
 
-@dataclass
+@dataclass(repr=False)
 class Wells(AlignedRepr):
     """The wells of a `minires.ResSim`: the flat, per-completion arrays.
 
@@ -122,9 +122,6 @@ class Wells(AlignedRepr):
     Assigning to `minires.ResSim.wells` normalizes it (`__setattr__`): positions
     get snapped onto the grid nodes, schedules reshaped to `(nComp, nTime)`, etc.
     """
-
-    # Dont use dataclass repr
-    __repr__ = AlignedRepr.__repr__
 
     # NB: the array attributes are typed `Any` since `__setattr__` normalizes
     # whatever array-like (nested lists, scalars) is assigned to them.
