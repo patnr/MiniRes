@@ -1,0 +1,49 @@
+cff-version: 1.2.0
+message: "If you use MiniRes in your work, please cite it as below."
+type: software
+title: MiniRes
+abstract: >-
+  A small, two-dimensional, two-phase (water/oil), immiscible reservoir
+  simulator using two-point flux approximation (TPFA), with a hand-derived
+  adjoint model. Intended for teaching, prototyping, and as a fast forward
+  model for history matching and data assimilation experiments.
+authors:
+  - family-names: Raanes
+    given-names: Patrick N.
+    email: patrick.n.raanes@gmail.com
+    affiliation: NORCE Norwegian Research Centre
+    orcid: "https://orcid.org/0000-0001-5073-6786"
+version: 0.3.2
+date-released: "2026-09-15"
+license: MIT
+repository-code: "https://github.com/patnr/MiniRes"
+url: "https://patnr.github.io/MiniRes/minires.html"
+keywords:
+  - reservoir-simulation
+  - reservoir-engineering
+  - petroleum
+  - porous-media
+  - two-phase-flow
+  - waterflooding
+  - darcy
+  - finite-volume
+  - tpfa
+  - adjoint
+  - history-matching
+  - data-assimilation
+references:
+  - type: generic
+    title: "An Introduction to the Numerics of Flow in Porous Media using Matlab"
+    authors:
+      - family-names: Aarnes
+        given-names: Jørg E.
+      - family-names: Gimse
+        given-names: Tore
+      - family-names: Lie
+        given-names: Knut-Andreas
+    year: 2007
+    collection-title: "Geometric Modelling, Numerical Simulation, and Optimization"
+    publisher:
+      name: "Springer Berlin Heidelberg"
+    doi: 10.1007/978-3-540-68783-2_9
+    notes: "The Matlab codes that MiniRes was translated from."

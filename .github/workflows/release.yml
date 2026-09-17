@@ -3,7 +3,8 @@ name: release
 # A pushed tag `vX.Y.Z` is a release: build the distributions, publish them to
 # PyPI, and create the GitHub Release with that version's CHANGELOG section as
 # its notes. The tag is annotated by hand (ref CLAUDE.md, "Release state"),
-# after the commit that bumps `pyproject.toml` and dates the CHANGELOG section.
+# after the commit that bumps `pyproject.toml` and `CITATION.cff`, and dates the
+# CHANGELOG section.
 on:
   push:
     tags: ["v*"]
@@ -29,6 +30,14 @@ jobs:
         run: |
           grep -q "^## \[${GITHUB_REF_NAME#v}\] -- [0-9]\{4\}-[0-9][0-9]-[0-9][0-9]" CHANGELOG.md || {
             echo "::error::no dated section '## [${GITHUB_REF_NAME#v}] -- YYYY-MM-DD' in CHANGELOG.md"; exit 1; }
+
+      - name: Check that CITATION.cff agrees with both
+        run: |
+          grep -q "^version: ${GITHUB_REF_NAME#v}$" CITATION.cff || {
+            echo "::error::CITATION.cff: 'version' is not ${GITHUB_REF_NAME#v}"; exit 1; }
+          d=$(sed -n "s/^## \[${GITHUB_REF_NAME#v}\] -- \([0-9-]*\).*/\1/p" CHANGELOG.md)
+          grep -q "^date-released: \"\?$d\"\?$" CITATION.cff || {
+            echo "::error::CITATION.cff: 'date-released' is not $d, the CHANGELOG's date"; exit 1; }
 
       - run: uv build
 
