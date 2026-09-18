@@ -1,4 +1,4 @@
-MiniRes is a
+MiniRes is a lean,
 2D, two-phase, black-oil, immiscible
 reservoir simulator
 using TPFA (two-point flux approximation)

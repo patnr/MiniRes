@@ -2,13 +2,13 @@
 
 <img src="https://raw.githubusercontent.com/patnr/MiniRes/main/logo.png" alt="The MiniRes logo" align="right" width="300"/>
 
-A simple petroleum reservoir simulator
+A lean petroleum reservoir simulator
 using TPFA (two-point flux approximation).
 [**Documentation**](https://patnr.github.io/MiniRes/minires.html).
 
 - **Small**: all of its physics fit in `core.py`'s 400 lines of code.
 - **Capable**: two-phase, slight compressibility, BHP control, well paths, irregular outlines and faults (inactive cells), aquifers –
-  **but** 2D uniform grid, immiscible, isothermal, and simple well models and operation.
+  **but** a toy: 2D uniform grid, immiscible, isothermal, and simple well models and operation.
 - **Adjoint** model included; verified against finite differences.
 - **Python**: [![PyPI](https://img.shields.io/pypi/v/minires?logo=pypi&logoColor=white)](https://pypi.org/project/minires/) (`pip install minires`), or demo it in a web browser via
   [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/patnr/MiniRes/blob/main/notebooks/colab.ipynb) (backend: Google)

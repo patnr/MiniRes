@@ -3,10 +3,10 @@ message: "If you use MiniRes in your work, please cite it as below."
 type: software
 title: MiniRes
 abstract: >-
-  A small, two-dimensional, two-phase (water/oil), immiscible reservoir
+  A lean, two-dimensional, two-phase (water/oil), immiscible reservoir
   simulator using two-point flux approximation (TPFA), with a hand-derived
-  adjoint model. Intended for teaching, prototyping, and as a fast forward
-  model for history matching and data assimilation experiments.
+  adjoint model. A toy, intended for teaching, prototyping, and as a fast
+  forward model for history matching and data assimilation experiments.
 authors:
   - family-names: Raanes
     given-names: Patrick N.
