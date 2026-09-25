@@ -7,7 +7,7 @@ using TPFA (two-point flux approximation).
 [**Documentation**](https://patnr.github.io/MiniRes/minires.html).
 
 - **Small**: all of its physics fit in `core.py`'s 400 lines of code.
-- **Capable**: two-phase, slight compressibility, BHP control, well paths, irregular outlines and faults (inactive cells), aquifers –
+- **Capable**: two-phase, slight compressibility, BHP control, lateral well paths, irregular outlines and faults (inactive cells), aquifers –
   **but** a toy: 2D uniform grid, immiscible, isothermal, and simple well models and operation.
 - **Adjoint** model included; verified against finite differences.
 - **Python**: [![PyPI](https://img.shields.io/pypi/v/minires?logo=pypi&logoColor=white)](https://pypi.org/project/minires/) (`pip install minires`), or demo it in a web browser via

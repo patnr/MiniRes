@@ -6,9 +6,9 @@ cell is actually traversed), and `w`, the resulting split of the well's rate.
 Several completions then act as a single well simply by *being* several wells:
 `ResSim.assemble_wells` superimposes them.
 
-Here a point injector in the SW corner is replaced by a "horizontal" one along
-the whole west edge, at the same total rate, and the difference in sweep is the
-point of the exercise.
+Here a point injector in the SW corner is replaced by a "horizontal" one
+(a lateral, as seen from above) along the whole west edge, at the same total
+rate, and the difference in sweep is the point of the exercise.
 
 The rate split, though, is a choice, and the two modes of control make it
 differently:
